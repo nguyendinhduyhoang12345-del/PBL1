@@ -24,8 +24,8 @@ void addToCart(Bill *currentBill) {
         }
 
         printf("\n--- DAT MON ---");
-        printf("\n>> Nhap Ma Mon (Mon chinh: %d/5 | Mon them & Nuoc: Khong gioi han) : ", countMain);
-        idNhap = getValidInt("");
+        printf("\n>>(Mon chinh: %d/5 | Mon them & Nuoc: Khong gioi han, Nhap 0 de thoat) : ", countMain);
+        idNhap = getValidInt("\n>> Nhap Ma Mon: ");
 
         if (idNhap == 0) break;
         if (idNhap < 1 || idNhap > TONG_SO_MON) {
@@ -51,9 +51,16 @@ void addToCart(Bill *currentBill) {
         int opt = 0;
         double giaThucTe = menu[idx].price;
         if (menu[idx].hasOptions) {
-            printf("  1. Cot let | 2. Suon cay (+10k)\n");
-            opt = getValidInt("  >> Chon loai: ");
-            if (opt == 2) giaThucTe += 10000;
+            while (1) {
+                printf("  1. Cot let | 2. Suon cay (+10k)\n");
+                opt = getValidInt("  >> Chon loai: ");
+                if (opt == 1 || opt == 2) {
+                    if (opt == 2) giaThucTe += 10000;
+                    break;
+                } else {
+                    printf("  !! Loi: Chi chon 1 hoac 2.\n");
+                }
+            }
         }
 
         // Ghi chú
@@ -185,6 +192,9 @@ void handleCartMenu(Bill* currentBill) {
         } 
         else if (subChoice == 0) {
             break; // Thoát vòng lặp để về main
+        }
+        else {
+            printf("[!] Lua chon khong hop le.\n");
         }
     }
 }

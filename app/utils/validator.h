@@ -11,4 +11,10 @@ double getValidDouble(const char* prompt);
 
 int isDigits(const char* s);
 
+void trimString(char* s);
+
+void getValidPhoneNumber(char* phone, int maxLen, const char* prompt);
+
+void getValidLine(char* buffer, int maxLen, const char* prompt);
+
 #endif

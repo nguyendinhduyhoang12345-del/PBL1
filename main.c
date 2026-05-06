@@ -47,6 +47,11 @@ int main() {
         printf("====================================================\n");
         
         choice = getValidInt("-> Chon chuc nang: ");
+        if (choice < 0 || choice > 6) {
+            printf("[!] Lua chon khong hop le.\n");
+            system("pause");
+            continue;
+        }
         switch(choice) {
             case 1:
                 system("cls");

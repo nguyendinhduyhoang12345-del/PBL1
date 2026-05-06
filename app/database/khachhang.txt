@@ -4,7 +4,8 @@
 4|0904567890|Le Quang Minh|101 Tran Phu, Ha Noi|0.000|Bronze
 5|0905678901|Thai Nguyen Anh Kiet|202 Nguyen Hue, Da Nang|5434400.000|Gold
 6|0906789012|Le Hoang Truong|303 Ly Thai To, Da Nang|1050000.000|Silver
-7|0907890123|Nguyen Quang Chien|404 Vo Nguyen Giap, Da Nang|450000.000|Bronze
+7|0907890123|Nguyen Quang Chien|404 Vo Nguyen Giap, Da Nang|554000.000|Bronze
 8|0908901234|Nguyen Dinh Duy Hoang|505 Dong Da, Hue|15000750.000|Diamond
 9|0909012345|Le Ngoc Nam|606 Quang Trung, HCM|95000.000|Bronze
 10|0900123456|Pham Le Gia Huy|707 Bach Dang, Da Nang|2100000.000|Silver
+11|0904207257|Nguyen Duy Hoang|21 Ngu Hanh Son|319000.000|Bronze

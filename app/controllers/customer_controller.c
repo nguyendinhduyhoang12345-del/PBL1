@@ -9,35 +9,8 @@
 void handleCustomer(Bill *currentBill) {
     char sdt[15];
     printf("\n--- QUAN LY KHACH HANG ---\n");
-    printf(">> Nhap So Dien Thoai khach hang: ");
-    scanf("%14s", sdt);
-    clearBuffer();
-
-    // Trim khoảng trắng ở đầu và cuối
-    int len = strlen(sdt);
-    while (len > 0 && (sdt[len-1] == ' ' || sdt[len-1] == '\t')) {
-        sdt[--len] = 0;
-    }
-    int i = 0;
-    while (sdt[i] == ' ' || sdt[i] == '\t') i++;
-    if (i > 0) memmove(sdt, sdt + i, strlen(sdt + i) + 1);
-
-    // 1. ÁP DỤNG FLOWCHART: Bắt lỗi phải đúng 10 số
-    while (strlen(sdt) != 10) {
-        printf("[!] SDT phai co dung 10 so. Vui long nhap lai: ");
-        scanf("%s", sdt);
-        clearBuffer();
-        
-        // Trim lại
-        len = strlen(sdt);
-        while (len > 0 && (sdt[len-1] == ' ' || sdt[len-1] == '\t')) {
-            sdt[--len] = 0;
-        }
-        i = 0;
-        while (sdt[i] == ' ' || sdt[i] == '\t') i++;
-        if (i > 0) memmove(sdt, sdt + i, strlen(sdt + i) + 1);
-    }
-
+    getValidPhoneNumber(sdt, sizeof(sdt), ">> Nhap So Dien Thoai khach hang: ");
+    
     // Tìm kiếm trong B-Tree 
     Customer* found = searchBTree(btreeRoot, sdt);
 
@@ -58,13 +31,9 @@ void handleCustomer(Bill *currentBill) {
             newCust.id = soLuongKH + 1; 
             strcpy(newCust.phone, sdt);
             
-            printf(" >> Nhap Ten: "); 
-            fgets(newCust.name, 50, stdin); 
-            newCust.name[strcspn(newCust.name, "\n")] = 0;
+            getValidLine(newCust.name, sizeof(newCust.name), " >> Nhap Ten: ");
             
-            printf(" >> Nhap Dia chi: "); 
-            fgets(newCust.address, 100, stdin); 
-            newCust.address[strcspn(newCust.address, "\n")] = 0;
+            getValidLine(newCust.address, sizeof(newCust.address), " >> Nhap Dia chi: ");
             
             newCust.totalSpent = 0.000; // Định dạng 3 số lẻ
             strcpy(newCust.rank, "Bronze"); 

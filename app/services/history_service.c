@@ -26,13 +26,28 @@ void saveBillToHistoryFile(int customerId, Bill* bill) {
     FILE* file = fopen(filename, "a");
     if (file == NULL) {
         file = fopen(filename, "w");
-        if (file == NULL) {
-            return;
-        }
+        if (file == NULL) return;
     }
 
-    fprintf(file, "%d|%d|%s|%.3f|%.3f\n", 
-            bill->id, customerId, bill->dateTime, bill->finalPrice, bill->discount);
+    // Lưu dòng thông tin bill
+    fprintf(file, "BILL|%d|%d|%s|%s|%s|%.3f|%.3f|%.3f|%d\n",
+            bill->id, customerId, bill->customer.name, bill->customer.phone,
+            bill->dateTime, bill->total, bill->discount, bill->finalPrice, bill->itemCount);
+
+    // Lưu từng item
+    for (int i = 0; i < bill->itemCount; i++) {
+        fprintf(file, "ITEM|%d|%s|%.3f|%d|%d|%s|%.3f\n",
+                bill->items[i].id,
+                bill->items[i].name,
+                bill->items[i].price,
+                bill->items[i].quantity,
+                bill->items[i].option,
+                bill->items[i].note,
+                bill->items[i].totalPrice);
+    }
+
+    // Lưu dấu kết thúc
+    fprintf(file, "END\n");
     fclose(file);
 }
 
@@ -41,40 +56,105 @@ void saveBillToGlobalFile(Bill* bill, int customerId) {
     FILE* file = fopen("app/database/history.txt", "a");
     if (file == NULL) {
         file = fopen("app/database/history.txt", "w");
-        if (file == NULL) {
-            return; 
-        }
+        if (file == NULL) return;
     }
-    fprintf(file, "%d|%d|%s|%.3f|%.3f\n",
-            bill->id, customerId, bill->dateTime, bill->finalPrice, bill->discount);
+
+    // Lưu dòng thông tin bill
+    fprintf(file, "BILL|%d|%d|%s|%s|%s|%.3f|%.3f|%.3f|%d\n",
+            bill->id, customerId, bill->customer.name, bill->customer.phone,
+            bill->dateTime, bill->total, bill->discount, bill->finalPrice, bill->itemCount);
+
+    // Lưu từng item
+    for (int i = 0; i < bill->itemCount; i++) {
+        fprintf(file, "ITEM|%d|%s|%.3f|%d|%d|%s|%.3f\n",
+                bill->items[i].id,
+                bill->items[i].name,
+                bill->items[i].price,
+                bill->items[i].quantity,
+                bill->items[i].option,
+                bill->items[i].note,
+                bill->items[i].totalPrice);
+    }
+
+    // Lưu dấu kết thúc
+    fprintf(file, "END\n");
     fclose(file);
 }
 
 // load lịch sử từ file
-void loadHistoryFromFile() { // Đọc file lịch sử chung của quán để khởi tạo linked list trong bộ nhớ
+void loadHistoryFromFile() {
     FILE* file = fopen("app/database/history.txt", "r");
     if (file == NULL) {
-        return; 
+        return;
     }
 
-    char line[200];
+    char line[500];
+    Bill tempBill = {0};
+    int itemCount = 0;
+    int billStarted = 0;
+    int currentCustomerId = -1;
+
     while (fgets(line, sizeof(line), file)) {
-        int billId, customerId;
-        double finalPrice, discount;
-        char dateTime[50];
+        int len = strlen(line);
+        while (len > 0 && (line[len - 1] == '\n' || line[len - 1] == '\r')) {
+            line[--len] = '\0';
+        }
 
-        sscanf(line, "%d|%d|%[^|]|%lf|%lf", &billId, &customerId, dateTime, &finalPrice, &discount);
-        
-        // Tạo Bill tạm để lưu vào linked list
-        Bill tempBill = {0};
-        tempBill.id = billId;
-        tempBill.finalPrice = finalPrice;
-        tempBill.discount = discount;
-        strcpy(tempBill.dateTime, dateTime);
-        
-        // thêm vào linked list để quản lý trong bộ nhớ
-        addBillToHistory(customerId, &tempBill);
+        if (strncmp(line, "BILL|", 5) == 0) {
+            int billId, customerId, itemCountInFile;
+            char nameKhach[50], phoneKhach[15], dateTime[50];
+            double total, discount, finalPrice;
+
+            sscanf(line, "BILL|%d|%d|%[^|]|%[^|]|%[^|]|%lf|%lf|%lf|%d",
+                   &billId, &customerId, nameKhach, phoneKhach, dateTime,
+                   &total, &discount, &finalPrice, &itemCountInFile);
+
+            tempBill = (Bill){0};
+            tempBill.id = billId;
+            tempBill.customer.id = customerId;
+            strcpy(tempBill.customer.name, nameKhach);
+            strcpy(tempBill.customer.phone, phoneKhach);
+            strcpy(tempBill.dateTime, dateTime);
+            tempBill.total = total;
+            tempBill.discount = discount;
+            tempBill.finalPrice = finalPrice;
+            tempBill.itemCount = itemCountInFile;
+
+            itemCount = 0;
+            currentCustomerId = customerId;
+            billStarted = 1;
+        }
+        else if (strncmp(line, "ITEM|", 5) == 0 && billStarted) {
+            if (itemCount < MAX_GIO_HANG) {
+                int id, quantity, option;
+                char name[50], note[100];
+                double price, totalPrice;
+
+                sscanf(line, "ITEM|%d|%[^|]|%lf|%d|%d|%[^|]|%lf",
+                       &id, name, &price, &quantity, &option, note, &totalPrice);
+
+                tempBill.items[itemCount].id = id;
+                strcpy(tempBill.items[itemCount].name, name);
+                tempBill.items[itemCount].price = price;
+                tempBill.items[itemCount].quantity = quantity;
+                tempBill.items[itemCount].option = option;
+                strcpy(tempBill.items[itemCount].note, note);
+                tempBill.items[itemCount].totalPrice = totalPrice;
+
+                itemCount++;
+            }
+        }
+        else if (strcmp(line, "END") == 0 && billStarted) {
+            tempBill.itemCount = itemCount;
+            addBillToHistory(currentCustomerId, &tempBill);
+
+            tempBill = (Bill){0};
+            itemCount = 0;
+            billStarted = 0;
+            currentCustomerId = -1;
+        }
     }
+
     fclose(file);
 }
 

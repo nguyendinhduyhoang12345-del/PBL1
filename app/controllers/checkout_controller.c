@@ -43,6 +43,8 @@ void processCheckout(Bill* currentBill) {
     getCurrentDateTime(currentBill->dateTime, sizeof(currentBill->dateTime));
     currentBill->id = rand() % 900000 + 100000; // Gán ID ngẫu nhiên cho hóa đơn (100000-999999)
 
+
+
     // --- BƯỚC 2: TƯƠNG TÁC NHẬP LIỆU VỚI THU NGÂN ---
     printf(">> TONG TIEN BAN DAU   : %15.3f VND\n", subtotal);
     
@@ -59,7 +61,6 @@ void processCheckout(Bill* currentBill) {
 
     // Tương tác với thu ngân
     double customerMoney = 0;
-    printf("-> Nhap so tien khach dua : ");
     customerMoney = getValidDouble("-> Nhap so tien khach dua : ");
 
     while (customerMoney < finalPrice) {
@@ -72,7 +73,6 @@ void processCheckout(Bill* currentBill) {
 
     // --- BƯỚC 4: XÁC NHẬN VÀ LƯU DATABASE ---
     int xacNhan;
-    printf("\nXac nhan thanh toan (1: Dong y / 0: Huy bo): ");
     xacNhan = getValidInt("Xac nhan thanh toan (1: Dong y / 0: Huy bo): ");
     if (xacNhan == 1) {
         if (khGoc != NULL) {
