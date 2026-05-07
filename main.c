@@ -3,16 +3,21 @@
 #include <time.h>
 
 #include "app/models/models.h"
+
 #include "app/utils/helper.h"
 #include "app/utils/validator.h"
-#include "app/services/file_service.h"
+
 #include "app/ui/menu_ui.h"
 #include "app/ui/cart_ui.h"
+
 #include "app/controllers/order_controller.h"
 #include "app/controllers/customer_controller.h"
 #include "app/controllers/checkout_controller.h"
 #include "app/controllers/history_controller.h"
+
+#include "app/services/file_service.h"
 #include "app/services/history_service.h"
+#include "app/services/report_service.h"
 
 
 // ĐỊNH NGHĨA BIẾN TOÀN CỤC (Phải có ở main.c để link dữ liệu)
@@ -42,7 +47,7 @@ int main() {
         printf("  3. Nhap thong tin KH\n");
         printf("  4. Thanh toan\n");
         printf("  5. Xem lich su\n");
-        printf("  6. Thong ke doanh thu\n");
+        printf("  6. Thong ke doanh thu va xuat file bao cao\n");
         printf("  0. Thoat\n");
         printf("====================================================\n");
         
@@ -76,6 +81,11 @@ int main() {
             case 5:
                 system("cls");
                 handleViewHistory();
+                system("pause");
+                break;
+            case 6:
+                system("cls");
+                handleGenerateReport();
                 system("pause");
                 break;
             case 0:

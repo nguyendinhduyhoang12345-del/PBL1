@@ -13,8 +13,9 @@ void printAllHistory() {
     }
     
     printf("\n============== TOAN BO LICH SU HOA DON ==============\n");
-    printf("%-8s | %-12s | %-20s | %-12s | %-10s | %-6s\n", "Bill ID", "Customer ID", "Thoi gian", "So tien", "Giam gia", "Items");
-    printf("==============================================================\n");
+    printf("%-8s | %-12s | %-20s | %-10s | %-16s | %-10s | %-10s | %-6s\n",
+       "Bill ID", "Customer ID", "Thoi gian", "Rank", "Tich luy", "So tien", "Giam gia", "Items");
+    printf("===============================================================================================\n");
     
     double totalAmount = 0;
     int count = 0;
@@ -28,15 +29,16 @@ void printAllHistory() {
 
         if (strncmp(line, "BILL|", 5) == 0) {
             int billId, customerId, itemCount;
-            char customerName[50], phone[15], dateTime[50];
-            double total, discount, finalPrice;
+            char customerName[50], phone[15], dateTime[50], rank[20];
+            double total, discount, finalPrice, totalSpent;
 
-            sscanf(line, "BILL|%d|%d|%[^|]|%[^|]|%[^|]|%lf|%lf|%lf|%d",
+            sscanf(line, "BILL|%d|%d|%[^|]|%[^|]|%[^|]|%lf|%lf|%lf|%d|%[^|]|%lf",
                    &billId, &customerId, customerName, phone, dateTime,
-                   &total, &discount, &finalPrice, &itemCount);
+                   &total, &discount, &finalPrice, &itemCount,
+                   rank, &totalSpent);
 
-            printf("%-8d | %-12d | %-20s | %12.3f | %10.3f | %-6d\n",
-                   billId, customerId, dateTime, finalPrice, discount, itemCount);
+            printf("%-8d | %-12d | %-20s | %-10s | %16.3f | %10.3f | %10.3f | %-6d\n",
+                   billId, customerId, dateTime, rank, totalSpent, finalPrice, discount, itemCount);
             totalAmount += finalPrice;
             count++;
         }
@@ -66,6 +68,9 @@ void printCustomerHistory(HistoryNode* customerHistory) {
     while (current != NULL) {
         printf("\n--- Hoa don so: %d | Ngay: %s ---\n", current->bill.id, current->bill.dateTime);
         printf("Khach hang: %s | SDT: %s\n", current->bill.customer.name, current->bill.customer.phone);
+        printf("Rank: %s | Tong tich luy: %.3f VND\n",
+               current->bill.customer.rank,
+               current->bill.customer.totalSpent);
         printf("%-4s | %-4s | %-25s | %-3s | %-8s | %-20s | %12s\n", "STT", "ID", "Ten mon", "SL", "Option", "Ghi chu", "Thanh tien");
         printf("-----------------------------------------------------------------------------------------\n");
 
@@ -114,6 +119,9 @@ void printBillDetail(HistoryNode* billNode ) { // nhận vào node lịch sử �
     printf("\n=============== CHI TIET HOA DON ID: %d ===============\n", billNode->bill.id);
     printf("Khach hang ID: %d\n", billNode->customerId);
     printf("Khach hang: %s | SDT: %s\n", billNode->bill.customer.name, billNode->bill.customer.phone);
+    printf("Rank: %s | Tong tich luy: %.3f VND\n",
+           billNode->bill.customer.rank,
+           billNode->bill.customer.totalSpent);
     printf("Ngay: %s\n", billNode->bill.dateTime);
     
     printf("%-4s | %-4s | %-25s | %-3s | %-8s | %-20s | %12s\n", "STT", "ID", "Ten mon", "SL", "Option", "Ghi chu", "Thanh tien");

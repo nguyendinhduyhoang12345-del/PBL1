@@ -81,29 +81,44 @@ void processCheckout(Bill* currentBill) {
             char oldRank[20];
             strcpy(oldRank, khGoc->rank);
 
-            // 2. Cập nhật dữ liệu mới
+            // 2. Cập nhật dữ liệu khách hàng
             khGoc->totalSpent += finalPrice;
-            // thêm hóa đơn vào lịch sử của khách hàng nếu có số điện thoại
-            if (strlen(currentBill->customer.phone) > 0) {
-                addBillToHistory(currentBill->customer.id, currentBill);
-                saveBillToHistoryFile(currentBill->customer.id, currentBill);
-                saveBillToGlobalFile(currentBill, currentBill->customer.id);
-            }
             updateCustomerRank(khGoc); // Cập nhật hạng dựa trên mốc 1tr - 5tr - 10tr
-            
-            // 3. Ghi vào file khachhang.txt
+
+            // 3. Gán dữ liệu customer vào bill để lưu lịch sử đầy đủ
+            currentBill->customer.id = khGoc->id;
+            strcpy(currentBill->customer.name, khGoc->name);
+            strcpy(currentBill->customer.phone, khGoc->phone);
+            strcpy(currentBill->customer.rank, khGoc->rank);
+            currentBill->customer.totalSpent = khGoc->totalSpent;
+
+            // 4. Ghi lại dữ liệu khách hàng vào file khachhang.txt
             saveAllCustomersToFile(); 
 
-            // 4. IN DÒNG CẬP NHẬT TRẠNG THÁI (Theo ý bạn)
+            // 5. Hiển thị thông tin cập nhật
             printf("\n------------------------------------------------------------\n");
             printf("[ CAP NHAT KHACH HANG ]\n");
             printf(">> Tong chi tieu cu : %15.3f VND\n", oldTotal);
             printf(">> Tong chi tieu moi: %15.3f VND\n", khGoc->totalSpent);
             printf(">> Hang hien tai    : %s\n", khGoc->rank);
-            
             if (strcmp(oldRank, khGoc->rank) != 0) {
-                 printf("\n[*] CHUC MUNG! Quy khach da duoc nang hang tu %s len %s!\n", oldRank, khGoc->rank);
+                printf("\n[*] CHUC MUNG! Quy khach da duoc nang hang tu %s len %s!\n", oldRank, khGoc->rank);
             }
+        } 
+        else {
+            // Khách vãng lai: vẫn lưu lịch sử chung với giá trị cơ bản
+            currentBill->customer.id = 0;
+            strcpy(currentBill->customer.rank, "Khach vang lai");
+            currentBill->customer.totalSpent = finalPrice;
+        }
+
+        // 6. Lưu lịch sử hóa đơn chung của quán luôn
+        saveBillToGlobalFile(currentBill, currentBill->customer.id);
+
+        // 7. Nếu khách có ID hợp lệ thì lưu cả file lịch sử riêng của khách
+        if (khGoc != NULL && strlen(currentBill->customer.phone) > 0) {
+            addBillToHistory(currentBill->customer.id, currentBill);
+            saveBillToHistoryFile(currentBill->customer.id, currentBill);
         }
 
         printf("\n[OK] Thanh toan thanh cong! Cam on quy khach.\n");

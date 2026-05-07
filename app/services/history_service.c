@@ -30,20 +30,29 @@ void saveBillToHistoryFile(int customerId, Bill* bill) {
     }
 
     // Lưu dòng thông tin bill
-    fprintf(file, "BILL|%d|%d|%s|%s|%s|%.3f|%.3f|%.3f|%d\n",
-            bill->id, customerId, bill->customer.name, bill->customer.phone,
-            bill->dateTime, bill->total, bill->discount, bill->finalPrice, bill->itemCount);
+    fprintf(file, "BILL|%d|%d|%s|%s|%s|%.3f|%.3f|%.3f|%d|%s|%.3f\n",
+            bill->id,
+            customerId,
+            bill->customer.name,
+            bill->customer.phone,
+            bill->dateTime,
+            bill->total,
+            bill->discount,
+            bill->finalPrice,
+            bill->itemCount,
+            bill->customer.rank,
+            bill->customer.totalSpent);
 
     // Lưu từng item
     for (int i = 0; i < bill->itemCount; i++) {
-        fprintf(file, "ITEM|%d|%s|%.3f|%d|%d|%s|%.3f\n",
+        fprintf(file, "ITEM|%d|%s|%.3f|%d|%d|%.3f|%s\n",
                 bill->items[i].id,
                 bill->items[i].name,
                 bill->items[i].price,
                 bill->items[i].quantity,
                 bill->items[i].option,
-                bill->items[i].note,
-                bill->items[i].totalPrice);
+                bill->items[i].totalPrice,
+                bill->items[i].note);
     }
 
     // Lưu dấu kết thúc
@@ -60,20 +69,29 @@ void saveBillToGlobalFile(Bill* bill, int customerId) {
     }
 
     // Lưu dòng thông tin bill
-    fprintf(file, "BILL|%d|%d|%s|%s|%s|%.3f|%.3f|%.3f|%d\n",
-            bill->id, customerId, bill->customer.name, bill->customer.phone,
-            bill->dateTime, bill->total, bill->discount, bill->finalPrice, bill->itemCount);
+    fprintf(file, "BILL|%d|%d|%s|%s|%s|%.3f|%.3f|%.3f|%d|%s|%.3f\n",
+            bill->id,
+            customerId,
+            bill->customer.name,
+            bill->customer.phone,
+            bill->dateTime,
+            bill->total,
+            bill->discount,
+            bill->finalPrice,
+            bill->itemCount,
+            bill->customer.rank,
+            bill->customer.totalSpent);
 
     // Lưu từng item
     for (int i = 0; i < bill->itemCount; i++) {
-        fprintf(file, "ITEM|%d|%s|%.3f|%d|%d|%s|%.3f\n",
+        fprintf(file, "ITEM|%d|%s|%.3f|%d|%d|%.3f|%s\n",
                 bill->items[i].id,
                 bill->items[i].name,
                 bill->items[i].price,
                 bill->items[i].quantity,
                 bill->items[i].option,
-                bill->items[i].note,
-                bill->items[i].totalPrice);
+                bill->items[i].totalPrice,
+                bill->items[i].note);
     }
 
     // Lưu dấu kết thúc
@@ -102,12 +120,21 @@ void loadHistoryFromFile() {
 
         if (strncmp(line, "BILL|", 5) == 0) {
             int billId, customerId, itemCountInFile;
-            char nameKhach[50], phoneKhach[15], dateTime[50];
-            double total, discount, finalPrice;
+            char nameKhach[50], phoneKhach[15], dateTime[50], rankKhach[20];
+            double total, discount, finalPrice, totalSpent;
 
-            sscanf(line, "BILL|%d|%d|%[^|]|%[^|]|%[^|]|%lf|%lf|%lf|%d",
-                   &billId, &customerId, nameKhach, phoneKhach, dateTime,
-                   &total, &discount, &finalPrice, &itemCountInFile);
+            sscanf(line, "BILL|%d|%d|%[^|]|%[^|]|%[^|]|%lf|%lf|%lf|%d|%[^|]|%lf",
+                    &billId,
+                    &customerId,
+                    nameKhach,
+                    phoneKhach,
+                    dateTime,
+                    &total,
+                    &discount,
+                    &finalPrice,
+                    &itemCountInFile,
+                    rankKhach,
+                    &totalSpent);
 
             tempBill = (Bill){0};
             tempBill.id = billId;
@@ -119,6 +146,8 @@ void loadHistoryFromFile() {
             tempBill.discount = discount;
             tempBill.finalPrice = finalPrice;
             tempBill.itemCount = itemCountInFile;
+            strcpy(tempBill.customer.rank, rankKhach);
+            tempBill.customer.totalSpent = totalSpent;
 
             itemCount = 0;
             currentCustomerId = customerId;
@@ -130,16 +159,17 @@ void loadHistoryFromFile() {
                 char name[50], note[100];
                 double price, totalPrice;
 
-                sscanf(line, "ITEM|%d|%[^|]|%lf|%d|%d|%[^|]|%lf",
-                       &id, name, &price, &quantity, &option, note, &totalPrice);
-
+                sscanf(line, "ITEM|%d|%[^|]|%lf|%d|%d|%lf|%[^\n]",
+                        &id, name, &price, &quantity, &option, &totalPrice, note);
+                
                 tempBill.items[itemCount].id = id;
                 strcpy(tempBill.items[itemCount].name, name);
                 tempBill.items[itemCount].price = price;
                 tempBill.items[itemCount].quantity = quantity;
                 tempBill.items[itemCount].option = option;
-                strcpy(tempBill.items[itemCount].note, note);
                 tempBill.items[itemCount].totalPrice = totalPrice;
+                note[strcspn(note, "\n")] = 0;
+                strcpy(tempBill.items[itemCount].note, note);
 
                 itemCount++;
             }

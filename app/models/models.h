@@ -44,6 +44,12 @@ typedef struct {
     char dateTime[50];
 } Bill;
 
+typedef struct {
+    int customerId;
+    int billCount;       // Số hóa đơn của khách
+    double revenue;      // Tổng doanh thu của khách
+} CustomerRevenue;
+
 // CTDL động
 // danh sách liên kết quản lý lịch sử hóa đơn
 typedef struct HistoryNode {

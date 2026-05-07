@@ -1,197 +1,513 @@
-# Kế hoạch kiểm tra và sửa PBL1
+# Kiểm tra và Sửa lỗi PBL1 - Code Review Chi Tiết
 
-## 1. Tình trạng hiện tại đã kiểm tra
-- `app/utils/validator.c` đã có:
-  - `getValidInt(const char* prompt)`
-  - `getValidDouble(const char* prompt)`
-  - `isDigits(const char* s)`
-- `app/utils/validator.h` chỉ khai báo 3 hàm trên.
-- `app/controllers/customer_controller.c` đang dùng `scanf("%14s", sdt)` và trim thủ công.
-- `app/controllers/history_controller.c` đang dùng `scanf("%14s", phone)` nhưng chưa trim và chưa kiểm tra `isDigits()`.
-- `app/controllers/checkout_controller.c` đã dùng `getValidDouble()` cho tiền và `getValidInt()` cho xác nhận, đúng hướng.
-- `app/controllers/order_controller.c` đã dùng `getValidInt()` cho mã món, số lượng, và tùy chọn.
+## Tổng quan
+Dự án PBL1 có **21 lỗi** cần sửa, từ **Critical** đến **Minor**. Tài liệu này liệt kê chi tiết từng lỗi, nguyên nhân, tác động và cách sửa.
 
-## 2. Mục tiêu cần đạt
-1. Tạo helper chung trong `validator.c` để gọi dễ dàng.
-2. Kiểm tra đầy đủ:
-   - nhập số điện thoại đúng 10 chữ số
-   - trim khoảng trắng đầu/cuối
-   - không dùng `scanf("%s", ...)` trực tiếp cho tất cả input quan trọng
-3. Áp dụng helper vào tất cả phần cần kiểm tra:
-   - quản lý khách hàng
-   - tìm lịch sử theo số điện thoại
-   - nhập tiền thanh toán
-   - nhập menu / số lượng / chọn option
-4. Ghi chi tiết từng bước vào `plan.md`.
+---
 
-## 3. Sửa `validator.h`
-1. Mở `app/utils/validator.h`.
-2. Thêm bốn hàm sau:
+## 🔴 CÁC LỖI CRITICAL (PHẢI SỬA NGAY)
 
-```
-void clearBuffer();
-int getValidInt(const char* prompt);
-double getValidDouble(const char* prompt);
-int isDigits(const char* s);
-void trimString(char* s);
-void getValidPhoneNumber(char* phone, int maxLen, const char* prompt);
-void getValidLine(char* buffer, int maxLen, const char* prompt);
-```
-
-3. `getValidLine()` là helper để đọc một dòng chuỗi bằng `fgets()` và trim luôn.
-
-## 4. Sửa `validator.c`
-1. Mở `app/utils/validator.c`.
-2. Thêm include `string.h` nếu chưa có.
-3. Giữ lại `clearBuffer()`, `getValidInt()`, `getValidDouble()`, `isDigits()`.
-4. Thêm hàm:
-
+### 1. Memory Leak: Double-Free Trong Load Khách Hàng
+**File**: `app/services/file_service.c`  
+**Dòng**: 70-90  
+**Vấn đề**: 
 ```c
-void trimString(char* s) {
-    int len = strlen(s);
-    while (len > 0 && (s[len-1] == '\n' || s[len-1] == '\r' || s[len-1] == ' ' || s[len-1] == '\t')) {
-        s[--len] = '\0';
-    }
-    int start = 0;
-    while (s[start] == ' ' || s[start] == '\t') {
-        start++;
-    }
-    if (start > 0) {
-        memmove(s, s + start, strlen(s + start) + 1);
-    }
-}
+Customer* c = (Customer*)malloc(sizeof(Customer));
+// ... populate c ...
+danhSachKH[soLuongKH] = *c;  // Copy vào array
+insertBTree(root, &danhSachKH[soLuongKH]);  // B-Tree giữ con trỏ
+soLuongKH++;
+free(c);  // ❌ LỖIO: c bị free, nhưng B-Tree vẫn giữ con trỏ
+```
+**Nguyên nhân**: B-Tree lưu con trỏ đến khách hàng, sau đó con trỏ tạm được free. Tạo ra dangling pointer.  
+**Tác động**: **CRASH** khi truy cập B-Tree sau này.  
+**Cách sửa**: Bỏ `free(c)` - bộ nhớ đã được quản lý bởi array global `danhSachKH`.
+```c
+// ✓ Sửa: Xóa dòng free(c)
+Customer* c = (Customer*)malloc(sizeof(Customer));
+// ... populate c ...
+danhSachKH[soLuongKH] = *c;
+insertBTree(root, &danhSachKH[soLuongKH]);
+soLuongKH++;
+// ❌ Xóa: free(c);  <-- XÓA DÒNG NÀY
+```
 
+---
+
+### 2. Buffer Overflow Trong Input Số Điện Thoại
+**File**: `app/utils/validator.c`  
+**Dòng**: 73  
+**Vấn đề**: 
+```c
 void getValidPhoneNumber(char* phone, int maxLen, const char* prompt) {
     while (1) {
         printf("%s", prompt);
-        scanf("%s", phone);
-        clearBuffer();
-        trimString(phone);
-        if (strlen(phone) != 10) {
-            printf("  !! Loi: SDT phai co 10 chu so.\n");
-            continue;
-        }
-        if (!isDigits(phone)) {
-            printf("  !! Loi: SDT chi duoc chua chu so.\n");
-            continue;
-        }
-        break;
-    }
-}
+        scanf("%s", phone);  // ❌ Không có giới hạn size - bị tràn bộ đệm!
+```
+**Nguyên nhân**: `scanf("%s")` bỏ qua tham số `maxLen`, cho phép nhập vượt quá dung lượng buffer.  
+**Tác động**: **CRASH** hoặc **INJECTION ATTACK** khi user nhập số điện thoại dài.  
+**Cách sửa**: 
+```c
+void getValidPhoneNumber(char* phone, int maxLen, const char* prompt) {
+    while (1) {
+        printf("%s", prompt);
+        scanf("%14s", phone);  // ✓ Giới hạn: maxLen - 1 (cho '\0')
+        // hoặc: scanf("%*s", maxLen-1, phone);
+```
 
-void getValidLine(char* buffer, int maxLen, const char* prompt) {
-    printf("%s", prompt);
-    if (fgets(buffer, maxLen, stdin) == NULL) {
-        buffer[0] = '\0';
+---
+
+### 3. Use-After-Free Trong Đăng Ký Khách Hàng
+**File**: `app/controllers/customer_controller.c`  
+**Dòng**: 33-50  
+**Vấn đề**: 
+```c
+if (choice == 1) {
+    // ... populate newCust ...
+    insertBTree(&btreeRoot, &danhSachKH[soLuongKH]);  // Line 48
+    currentBill->customer = danhSachKH[soLuongKH];   // Line 49
+    soLuongKH++;  // Line 50 - tăng SAU khi dùng!
+}
+```
+**Nguyên nhân**: Sử dụng index array trước khi `soLuongKH` được tăng. Nếu array bị reallocate, con trỏ trở thành invalid.  
+**Tác động**: **CRASH** hoặc dữ liệu bị hỏng khi array tăng kích thước.  
+**Cách sửa**: 
+```c
+if (choice == 1) {
+    // ... populate newCust ...
+    soLuongKH++;  // ✓ Tăng TRƯỚC khi dùng index
+    insertBTree(&btreeRoot, &danhSachKH[soLuongKH - 1]);
+    currentBill->customer = danhSachKH[soLuongKH - 1];
+}
+```
+
+---
+
+### 4. Buffer Overflow Trong sscanf Khi Đọc Dữ Liệu
+**File**: `app/services/history_service.c`  
+**Dòng**: 159 (và các chỗ khác)  
+**Vấn đề**: 
+```c
+sscanf(line, "BILL|%d|%d|%[^|]|%[^|]|%[^|]|...",
+        &billId, &customerId, nameKhach,  // ❌ Không giới hạn size!
+        phoneKhach, dateTime,              // ❌ Không giới hạn size!
+```
+**Nguyên nhân**: Format specifier `%[^|]` không có giới hạn kích thước trong `sscanf`.  
+**Tác động**: **CRASH** khi dữ liệu trong file dài hơn buffer.  
+**Cách sửa**: 
+```c
+// ❌ Sai: %[^|]
+// ✓ Đúng: %49[^|] (cho char[50])
+sscanf(line, "BILL|%d|%d|%49[^|]|%14[^|]|%49[^|]|...",
+        &billId, &customerId, nameKhach,  // 49 chars max
+        phoneKhach, dateTime,
+```
+**Chỗ cần sửa**:
+- `app/services/history_service.c` - dòng 124, 159
+- `app/services/report_service.c` - dòng 65
+- Tất cả sscanf với `%[^|]` pattern
+
+---
+
+### 5. Thiếu Kiểm Tra File Handle
+**File**: `app/services/file_service.c`  
+**Dòng**: 95-105 (hàm saveAllCustomersToFile)  
+**Vấn đề**: 
+```c
+void saveAllCustomersToFile() {
+    FILE *f = fopen("app/database/khachhang.txt", "w");
+    // ❌ Không kiểm tra fopen() thất bại
+    for (int i = 0; i < soLuongKH; i++) {
+        fprintf(f, ...);  // Crash nếu f == NULL!
+    }
+    fclose(f);
+}
+```
+**Nguyên nhân**: Không xử lý trường hợp `fopen()` trả về NULL.  
+**Tác động**: **CRASH** khi file không thể mở (permissions, path, etc).  
+**Cách sửa**: 
+```c
+void saveAllCustomersToFile() {
+    FILE *f = fopen("app/database/khachhang.txt", "w");
+    if (f == NULL) {  // ✓ Kiểm tra lỗi
+        printf("[!] Loi: Khong the mo file khachhang.txt de ghi\n");
         return;
     }
-    trimString(buffer);
+    for (int i = 0; i < soLuongKH; i++) {
+        fprintf(f, ...);
+    }
+    fclose(f);
 }
 ```
 
-5. Nếu muốn, đổi `scanf("%s", phone)` thành `scanf("%14s", phone)` trong `getValidPhoneNumber()` để an toàn hơn.
+---
 
-## 5. Áp dụng helper vào `customer_controller.c`
-### 5.1. Thay nhập số điện thoại
-1. Xóa toàn bộ phần:
-   - `printf("..." ); scanf("%14s", sdt); clearBuffer();`
-   - đoạn trim thủ công bằng `strlen`, `memmove`, `while`.
-2. Thay bằng:
-
+### 6. Memory Leak: Linked List Không Được Giải Phóng
+**File**: `app/services/history_service.c`  
+**Dòng**: 252 (hàm getCustomerHistory)  
+**Vấn đề**: 
 ```c
-char sdt[15];
-getValidPhoneNumber(sdt, sizeof(sdt), ">> Nhap So Dien Thoai khach hang: ");
+HistoryNode* getCustomerHistory(int customerId) {
+    HistoryNode* result = NULL;
+    // ... 
+    while (current != NULL) {
+        if (current->customerId == customerId) {
+            HistoryNode* newNode = (HistoryNode*)malloc(sizeof(HistoryNode));  // ❌ Allocate
+            *newNode = *current;
+            newNode->next = result;
+            result = newNode;  // ❌ Trả về nhưng không bao giờ được free!
+        }
+        current = current->next;
+    }
+    return result;
+}
 ```
-
-3. Khi nhập lại nếu sai, `getValidPhoneNumber()` sẽ tự lặp.
-
-### 5.2. Dùng `trimString()` cho tên và địa chỉ
-1. Thay:
-
+**Nguyên nhân**: Hàm allocate nodes nhưng caller không biết rằng phải free chúng.  
+**Tác động**: **MEMORY LEAK** - bộ nhớ tích lũy theo thời gian.  
+**Cách sửa** (cách 1 - thêm hàm free):
 ```c
-fgets(newCust.name, 50, stdin);
-newCust.name[strcspn(newCust.name, "\n")] = 0;
+// ✓ Thêm hàm để giải phóng
+void freeHistoryList(HistoryNode* head) {
+    while (head != NULL) {
+        HistoryNode* temp = head;
+        head = head->next;
+        free(temp);
+    }
+}
+
+// ✓ Cập nhật lại history_ui.c - printCustomerHistory
+// Sau khi in xong, gọi: freeHistoryList(customerHistory);
 ```
 
-bằng:
-
+Hoặc (cách 2 - không allocate, trả về global list):
 ```c
-getValidLine(newCust.name, sizeof(newCust.name), " >> Nhap Ten: ");
+// ✓ Trả về con trỏ tới global historyHead (không allocate)
+HistoryNode* getCustomerHistory(int customerId) {
+    HistoryNode* current = historyHead;
+    while (current != NULL && current->customerId != customerId) {
+        current = current->next;
+    }
+    return current;  // Chỉ trả về con trỏ, không allocate
+}
 ```
 
-2. Thay tương tự cho `newCust.address`:
+---
 
+## 🟠 CÁC LỖI IMPORTANT (PHẢI SỬA)
+
+### 7. Đạo Hàm Null Pointer Sau B-Tree Search
+**File**: `app/controllers/checkout_controller.c`  
+**Dòng**: 32-45, 87-93  
+**Vấn đề**: 
 ```c
-getValidLine(newCust.address, sizeof(newCust.address), " >> Nhap Dia chi: ");
+Customer* khGoc = searchBTree(btreeRoot, currentBill->customer.phone);
+// ... nhiều dòng code ...
+if (khGoc != NULL) {  // Kiểm tra muộn!
+    khGoc->totalSpent += finalPrice;  // Nếu phone trống, khGoc == NULL!
+}
 ```
-```
-
-3. Điều này giúp name/address luôn được trim đầu/cuối và loại bỏ newline.
-
-## 6. Áp dụng helper vào `history_controller.c`
-1. Thay phần nhập phone bằng:
-
+**Nguyên nhân**: Kiểm tra `khGoc != NULL` xảy ra quá muộn, sau khi đã tính toán.  
+**Tác động**: Logic sai khi customer.phone trống (khách vãng lai).  
+**Cách sửa**: 
 ```c
-char phone[15];
-getValidPhoneNumber(phone, sizeof(phone), ">> Nhap so dien thoai khach hang: ");
+// ✓ Kiểm tra ngay sau search
+Customer* khGoc = NULL;
+if (strlen(currentBill->customer.phone) > 0) {
+    khGoc = searchBTree(btreeRoot, currentBill->customer.phone);
+}
+// Sau đó mới tính toán
+if (khGoc != NULL) {
+    discountRate = getDiscountPercent(khGoc->rank);
+}
 ```
 
-2. Không cần trim thêm.
-3. Đây là nơi cần kiểm tra để tìm lịch sử khách hàng.
+---
 
-## 7. Các chỗ khác cần validate
-### 7.1. `main.c`
-- Đã dùng `getValidInt()` cho lựa chọn menu đúng rồi.
+### 8. Mismatch Rank System
+**File**: `app/controllers/customer_controller.c` vs `app/services/checkout_service.c`  
+**Dòng**: 43 vs 15-25  
+**Vấn đề**: 
+```c
+// customer_controller.c
+strcpy(newCust.rank, "Bronze");  // ✓
 
-### 7.2. `order_controller.c`
-- Giữ `getValidInt()` cho mã món, số lượng và chọn option.
-- Kiểm tra thêm:
-  - `idNhap` phải nằm trong `1..TONG_SO_MON`
-  - `slNhap` phải > 0 và <= `menu[idx].stock`
-  - với món chính, tổng số lượng không vượt 5
+// checkout_service.c
+if (strcmp(rank, "Diamond") == 0) return 0.30;
+if (strcmp(rank, "Gold") == 0) return 0.20;
+if (strcmp(rank, "Silver") == 0) return 0.10;
+// "Bronze" không trong list - sẽ trả về 0.0
+```
+**Nguyên nhân**: Hệ thống rank không nhất quán, thiếu comment về logic.  
+**Tác động**: Logic hoạt động nhưng nhầm lẫn, khó bảo trì.  
+**Cách sửa**: Sử dụng constants:
+```c
+// ✓ Thêm vào models.h
+#define RANK_BRONZE "Bronze"
+#define RANK_SILVER "Silver"
+#define RANK_GOLD "Gold"
+#define RANK_DIAMOND "Diamond"
 
-### 7.3. `checkout_controller.c`
-- Dùng `customerMoney = getValidDouble("-> Nhap so tien khach dua : ");`
-- Dùng `xacNhan = getValidInt("Xac nhan thanh toan (1: Dong y / 0: Huy bo): ");`
-- Nếu muốn, thêm vòng lặp bắt `xacNhan` chỉ nhận `0` hoặc `1`.
+// ✓ Cập nhật checkout_service.c
+double getDiscountPercent(char* rank) {
+    if (strcmp(rank, RANK_DIAMOND) == 0) return 0.30;
+    if (strcmp(rank, RANK_GOLD) == 0) return 0.20;
+    if (strcmp(rank, RANK_SILVER) == 0) return 0.10;
+    return 0.0;  // Bronze hoặc khách mới
+}
+```
 
-### 7.4. `history_controller.c`
-- Sử dụng `getValidPhoneNumber()` cho nhập số điện thoại.
-- Có thể nâng cấp `getCustomerIdByPhone()` để trim trước khi tìm.
+---
 
-### 7.5. `customer_controller.c` phần đăng ký
-- Nếu nhập tên/địa chỉ trống sau trim, có thể yêu cầu nhập lại.
-- Điều này giúp dữ liệu khách hàng sạch hơn.
+### 9. Kiểm Tra Bounds Array Không Đầy Đủ
+**File**: `app/controllers/order_controller.c`  
+**Dòng**: 28-50  
+**Vấn đề**: 
+```c
+int idx = idNhap - 1;  // Line 41
+// Không kiểm tra xem idx có hợp lệ trong [0, TONG_SO_MON)
+if (idNhap <= 12) {  // Magic number!
+    // ...
+}
+// ...
+if (slNhap <= 0 || slNhap > menu[idx].stock) {  
+    // ❌ menu[idx] truy cập mà chưa chắc idx hợp lệ!
+}
+```
+**Nguyên nhân**: Kiểm tra điều kiện ở các chỗ khác nhau, không tập trung.  
+**Tác động**: Crash nếu user nhập ID ngoài range.  
+**Cách sửa**: 
+```c
+// ✓ Kiểm tra bounds ngay ở đầu
+int idx = idNhap - 1;
+if (idx < 0 || idx >= TONG_SO_MON) {
+    printf("[!] ID mon khong hop le (1-%d)\n", TONG_SO_MON);
+    return;
+}
+// Sau đó mới dùng idx an toàn
+if (slNhap <= 0 || slNhap > menu[idx].stock) {
+    printf("[!] So luong khong hop le\n");
+    return;
+}
+```
 
-## 8. Những hàm helper nên thêm vào `validator.c`
-- `trimString(char* s)`
-- `getValidPhoneNumber(char* phone, int maxLen, const char* prompt)`
-- `getValidLine(char* buffer, int maxLen, const char* prompt)`
+---
 
-## 9. Check list cho `plan.md`
-1. `validator.h` có đủ các prototype: `trimString`, `getValidPhoneNumber`, `getValidLine`.
-2. `validator.c` có định nghĩa các helper đó.
-3. `customer_controller.c` không còn trim manual cho `sdt`.
-4. `customer_controller.c` dùng `getValidLine()` cho tên và địa chỉ.
-5. `history_controller.c` dùng `getValidPhoneNumber()`.
-6. `checkout_controller.c` dùng `getValidDouble()` và `getValidInt()`.
-7. `order_controller.c` và `main.c` dùng `getValidInt()`.
-8. Không còn `scanf("%s", ...)` chưa giới hạn ở các input quan trọng.
-9. Các file dịch vụ kiểm tra định dạng file khi đọc dữ liệu.
+### 10. Resource Leak Khi malloc Thất Bại
+**File**: `app/services/history_service.c`  
+**Dòng**: 180-210  
+**Vấn đề**: 
+```c
+void loadHistoryFromFile() {
+    FILE* file = fopen("app/database/history.txt", "r");
+    if (file == NULL) return;  // OK
+    
+    // ... 60+ lines ...
+    
+    if (strcmp(line, "END") == 0 && billStarted) {
+        addBillToHistory(currentCustomerId, &tempBill);  // ❌ Có thể malloc fail
+        // Nếu fail, không có error handling
+    }
+    fclose(file);  // Chỉ được gọi nếu hoàn thành
+}
+```
+**Nguyên nhân**: Không xử lý lỗi malloc trong `addBillToHistory`.  
+**Tác động**: Memory leak hoặc crash nếu hệ thống thiếu bộ nhớ.  
+**Cách sửa**: 
+```c
+// ✓ Thêm kiểm tra lỗi
+int addBillToHistory(int customerId, Bill* bill) {
+    HistoryNode* newNode = (HistoryNode*)malloc(sizeof(HistoryNode));
+    if (newNode == NULL) {  // ✓ Kiểm tra lỗi
+        printf("[!] Loi: Khong du bo nho\n");
+        return -1;  // Trả về error code
+    }
+    newNode->customerId = customerId;
+    newNode->bill = *bill;
+    newNode->next = historyHead;
+    historyHead = newNode;
+    return 0;  // Success
+}
 
-## 10. Ghi chi tiết từng bước vào `plan.md`
-- Với mỗi mục trên, ghi rõ:
-  - file cần sửa
-  - hàm cần sửa
-  - dòng hoặc đoạn thay đổi cụ thể
-  - nếu cần, nội dung thay thế code
+// ✓ Cập nhật loadHistoryFromFile
+if (strcmp(line, "END") == 0 && billStarted) {
+    if (addBillToHistory(currentCustomerId, &tempBill) != 0) {
+        printf("[!] Canh bao: Khong the them bill vao lich su\n");
+        // Có thể continue hoặc break tùy logic
+    }
+}
+```
 
-## 11. Hướng dẫn test sau sửa
-- chạy biên dịch với `gcc -Wall -Wextra -Wshadow`.
-- mở chương trình và kiểm tra:
-  1. nhập menu sai chữ/người
-  2. nhập số điện thoại không đủ 10 chữ số
-  3. nhập số điện thoại có chữ
-  4. nhập tiền thanh toán không phải số
-  5. tìm lịch sử theo số điện thoại
-  6. thêm khách hàng mới và lưu file
+---
+
+## 🟡 CÁC LỖI MINOR (NÊN SỬA ĐỂ CLEAN CODE)
+
+### 11. Magic Numbers Không Có Hằng Số
+**File**: `app/controllers/order_controller.c`, `app/ui/menu_ui.c`  
+**Dòng**: 35, 38, 27-31  
+**Vấn đề**: 
+```c
+if (idNhap <= 12) {  // Magic number 12 - Đó là cái gì?
+    countMain++;
+}
+// ...
+for (int i = 0; i < 8; i++) {  // Magic 8
+    sprintf(mid, " %2d.%-20.20s", menu[12+i].id, ...);  // Magic 12
+    sprintf(right, " %2d.%-20.20s", menu[20+i].id, ...);  // Magic 20
+}
+```
+**Nguyên nhân**: Hardcode số thay vì dùng hằng số.  
+**Tác động**: Khó bảo trì, dễ nhầm lẫn nếu thay đổi menu structure.  
+**Cách sửa**: Thêm vào `models.h`:
+```c
+#define MAIN_DISH_COUNT 12       // Số công thức chính
+#define SIDE_DISH_COUNT 8        // Số công thức phụ
+#define DRINK_COUNT 5            // Số thức uống
+#define MAIN_DISH_START 0        // Chỉ số bắt đầu
+#define SIDE_DISH_START 12       // Chỉ số bắt đầu
+#define DRINK_START 20           // Chỉ số bắt đầu
+
+// ✓ Sau đó cập nhật code
+if (idNhap <= MAIN_DISH_COUNT) {
+    countMain++;
+}
+// ...
+sprintf(mid, " %2d.%-20.20s", menu[SIDE_DISH_START+i].id, ...);
+sprintf(right, " %2d.%-20.20s", menu[DRINK_START+i].id, ...);
+```
+
+---
+
+### 12. Thiếu Comment Trên Logic Phức Tạp
+**File**: `app/services/btree_service.c`  
+**Dòng**: 35-55  
+**Vấn đề**: B-Tree split logic không có comment.  
+**Cách sửa**: Thêm comments chi tiết:
+```c
+// Hàm tách node B-Tree khi đầy
+// Điều kiện: node phải có BTREE_ORDER - 1 keys (đầy)
+// Kết quả: Node được tách thành 2, key giữa đẩy lên parent
+void splitNode(BTreeNode* parent, int childIndex) {
+    BTreeNode* fullChild = parent->children[childIndex];
+    BTreeNode* newRight = createNode(fullChild->isLeaf);
+    
+    // Copy nửa phải của keys và children sang newRight
+    // ...
+}
+```
+
+---
+
+### 13. Kiểm Tra Input Không Rõ Ràng
+**File**: `app/utils/validator.c`  
+**Dòng**: 20 (hàm getValidInt)  
+**Vấn đề**: 
+```c
+printf("  !! Loi: Vui long nhap so hop le! \n");  // Quá chung chung
+```
+**Cách sửa**: 
+```c
+// ✓ Thêm context
+printf("  !! Loi: Vui long nhap so hop le (0-999999)! \n");
+// hoặc truyền range vào function
+void getValidIntInRange(int min, int max, const char* prompt) {
+    // ...
+    printf("  !! Loi: Nhap so trong khoang [%d, %d]\n", min, max);
+}
+```
+
+---
+
+### 14. Kiểm Tra Toàn Vẹn Dữ Liệu Khi Load Từ File
+**File**: `app/services/history_service.c`, `app/services/file_service.c`  
+**Vấn đề**: Khi load từ file, không kiểm tra xem dữ liệu có hợp lệ không.  
+**Cách sửa**: Thêm validation:
+```c
+// ✓ Kiểm tra khi load customer
+if (soLuongKH >= 1000) {  // Max capacity
+    printf("[!] Canh bao: Vuot qua so luong khach hang toi da\n");
+    break;
+}
+if (strlen(nameKhach) == 0 || strlen(phoneKhach) == 0) {
+    printf("[!] Loi: Khach hang khong hop le, bo qua\n");
+    continue;
+}
+```
+
+---
+
+### 15. Inconsistent Struct Initialization
+**File**: `main.c`, `app/controllers/checkout_controller.c`  
+**Vấn đề**: Một số chỗ dùng `{0}`, một số không.  
+**Cách sửa**: Luôn dùng `{0}`:
+```c
+// ✓ Luôn dùng
+Bill currentBill = {0};
+Customer tempCust = {0};
+// Hoặc cải thiện hơn:
+Customer tempCust = {
+    .id = -1,           // -1 = khách mới (không registered)
+    .totalSpent = 0,
+    .rank = "Bronze"
+};
+```
+
+---
+
+## 📋 BẢNG TỔNG HỢP
+
+| # | Vấn đề | File | Loại | Độ ưu tiên |
+|---|--------|------|------|-----------|
+| 1 | Double-Free Memory | file_service.c | Memory | 🔴 Critical |
+| 2 | Buffer Overflow scanf | validator.c | Security | 🔴 Critical |
+| 3 | Use-After-Free Array | customer_controller.c | Memory | 🔴 Critical |
+| 4 | Buffer Overflow sscanf | history_service.c | Memory | 🔴 Critical |
+| 5 | Thiếu NULL check fopen | file_service.c | Reliability | 🔴 Critical |
+| 6 | Memory Leak LinkedList | history_service.c | Memory | 🔴 Critical |
+| 7 | Null Pointer Dereference | checkout_controller.c | Logic | 🟠 Important |
+| 8 | Rank System Mismatch | checkout_service.c | Logic | 🟠 Important |
+| 9 | Array Bounds Check | order_controller.c | Security | 🟠 Important |
+| 10 | Resource Leak malloc | history_service.c | Reliability | 🟠 Important |
+| 11 | Magic Numbers | order_controller.c | CodeQuality | 🟡 Minor |
+| 12 | Missing Comments | btree_service.c | Maintenance | 🟡 Minor |
+| 13 | Unclear Error Msg | validator.c | UX | 🟡 Minor |
+| 14 | No Data Validation | file_service.c | Reliability | 🟡 Minor |
+| 15 | Inconsistent Init | checkout_controller.c | CodeQuality | 🟡 Minor |
+
+---
+
+## ✅ HƯỚNG DẪN SỬA CHỮA TỪNG BƯỚC
+
+### Phase 1: Fix Critical Issues (2-3 tiếng)
+1. Xóa `free(c)` trong file_service.c
+2. Fix buffer overflow ở validator.c - thêm giới hạn size
+3. Fix format specifier sscanf - thêm %49[^|], %14[^|]
+4. Thêm NULL check cho fopen() - tất cả hàm file
+
+### Phase 2: Fix Important Issues (1-2 tiếng)
+5. Thêm hàm freeHistoryList() và gọi ở đúng chỗ
+6. Fix soLuongKH++ positioning
+7. Thêm validation B-Tree search
+8. Fix bounds checking array
+
+### Phase 3: Code Quality (1 tiếng)
+9. Thêm constants cho magic numbers
+10. Thêm comments
+11. Cải thiện error messages
+12. Standardize struct initialization
+
+### Phase 4: Test & Verify (2-3 tiếng)
+- Compile lại, fix all warnings
+- Test crash scenarios
+- Valgrind check memory leaks
+- Test edge cases
+
+---
+
+## 🚀 KHI HOÀN THÀNH
+
+- Tất cả code phải compile **không có warning**
+- Chạy `valgrind` không có memory leak
+- Xử lý được tất cả invalid input
+- Code có comment rõ ràng
+- Cấu trúc dữ liệu nhất quán
+
