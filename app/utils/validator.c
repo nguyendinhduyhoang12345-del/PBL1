@@ -60,7 +60,7 @@ void trimString(char* s) {
 void getValidPhoneNumber(char* phone, int maxLen, const char* prompt) {
     while (1) {
         printf("%s", prompt);
-        scanf("%s", phone);
+        scanf("%14s", phone);
         clearBuffer();
         trimString(phone);
         if (strlen(phone) != 10) {

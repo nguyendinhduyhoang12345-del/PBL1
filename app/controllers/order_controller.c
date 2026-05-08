@@ -32,10 +32,14 @@ void addToCart(Bill *currentBill) {
             printf("  !! Loi: Ma mon ko hop le!\n");
             continue;
         }
+         
+        int idx = idNhap - 1; 
 
-        int idx = idNhap - 1;
+        if (idx < 0 || idx >= TONG_SO_MON) {
+            printf("[!] ID mon khong hop le (1-%d)\n", TONG_SO_MON);
+            return;
+        }
 
-        // --- LOGIC KIỂM TRA 5 MÓN CHÍNH (Theo Flowchart) ---
         if (idNhap <= 12 && countMain >= 5) {
             printf("  !! Thong bao: Ban da dat du 5 mon chinh (Gioi han 5).\n");
             continue;

@@ -10,12 +10,17 @@ extern BTreeNode* btreeRoot;
 
 
 // thêm hóa đơn vào linked list (bộ nhớ)
-void addBillToHistory(int customerId, Bill* bill) {
+int addBillToHistory(int customerId, Bill* bill) {
     HistoryNode* newNode = (HistoryNode*)malloc(sizeof(HistoryNode));
+    if (newNode == NULL) {  
+        printf("[!] Loi: Khong du bo nho\n");
+        return -1;
+    }
     newNode->customerId = customerId;
     newNode->bill = *bill; // Sao chép toàn bộ thông tin hóa đơn
     newNode->next = historyHead;
     historyHead = newNode;
+    return 0;
 }
 
 // lưu hóa đơn vào file lịch sử của từng khách
@@ -123,7 +128,7 @@ void loadHistoryFromFile() {
             char nameKhach[50], phoneKhach[15], dateTime[50], rankKhach[20];
             double total, discount, finalPrice, totalSpent;
 
-            sscanf(line, "BILL|%d|%d|%[^|]|%[^|]|%[^|]|%lf|%lf|%lf|%d|%[^|]|%lf",
+            sscanf(line, "BILL|%d|%d|%49[^|]|%14[^|]|%49[^|]|%lf|%lf|%lf|%d|%19[^|]|%lf",
                     &billId,
                     &customerId,
                     nameKhach,
@@ -159,7 +164,7 @@ void loadHistoryFromFile() {
                 char name[50], note[100];
                 double price, totalPrice;
 
-                sscanf(line, "ITEM|%d|%[^|]|%lf|%d|%d|%lf|%[^\n]",
+                sscanf(line, "ITEM|%d|%49[^|]|%lf|%d|%d|%lf|%99[^\n]",
                         &id, name, &price, &quantity, &option, &totalPrice, note);
                 
                 tempBill.items[itemCount].id = id;
@@ -176,7 +181,9 @@ void loadHistoryFromFile() {
         }
         else if (strcmp(line, "END") == 0 && billStarted) {
             tempBill.itemCount = itemCount;
-            addBillToHistory(currentCustomerId, &tempBill);
+            if (addBillToHistory(currentCustomerId, &tempBill) != 0) {
+                printf("[!] Canh bao: Khong the them bill vao lich su\n");
+            }
 
             tempBill = (Bill){0};
             itemCount = 0;
@@ -204,6 +211,15 @@ HistoryNode* getCustomerHistory(int customerId) {
     }
     
     return result;
+}
+
+// giải phóng bộ nhớ của linked list lịch sử
+void freeHistoryList(HistoryNode* head) {
+    while (head != NULL) {
+        HistoryNode* temp = head;
+        head = head->next;
+        free(temp);
+    }
 }
 
 // Tìm ID khách hàng theo số điện thoại

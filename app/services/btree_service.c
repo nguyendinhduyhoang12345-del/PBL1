@@ -21,7 +21,10 @@ Customer* searchBTree(BTreeNode* root, char* phone) {
     return searchBTree(root->children[i], phone);
 }
 
+
 void splitChild(BTreeNode* parent, int i, BTreeNode* child) {
+    // Điều kiện chia: child đã đầy (numKeys == BTREE_ORDER - 1)
+    
     BTreeNode* z = createBTreeNode(child->isLeaf);
     z->numKeys = 1; // Với BTREE_ORDER = 4, node mới sẽ lấy 1 khóa từ phần tử cuối
     z->customers[0] = child->customers[2]; // Lấy phần tử cuối cùng của child

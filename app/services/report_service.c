@@ -50,7 +50,7 @@ double calculateTotalRevenue() {
             double total, discount, finalPrice;
 
             // Parse thông tin từ dòng BILL
-            sscanf(line, "BILL|%d|%d|%[^|]|%[^|]|%[^|]|%lf|%lf|%lf|%d",
+            sscanf(line, "BILL|%d|%d|%49[^|]|%14[^|]|%49[^|]|%lf|%lf|%lf|%d",
                    &billId, &customerId, nameKhach, phone, dateTime,
                    &total, &discount, &finalPrice, &itemCount);
 
@@ -102,7 +102,7 @@ int calculateTotalItems() {
             char nameKhach[50], phone[15], dateTime[50];
             double total, discount, finalPrice;
 
-            sscanf(line, "BILL|%d|%d|%[^|]|%[^|]|%[^|]|%lf|%lf|%lf|%d",
+            sscanf(line, "BILL|%d|%d|%49[^|]|%14[^|]|%49[^|]|%lf|%lf|%lf|%d",
                    &billId, &customerId, nameKhach, phone, dateTime,
                    &total, &discount, &finalPrice, &itemsInBill);
 
@@ -134,7 +134,7 @@ void analyzeByCustomer(CustomerRevenue* customerStats, int* customerCount) {
             char nameKhach[50], phone[15], dateTime[50];
             double total, discount, finalPrice;
 
-            sscanf(line, "BILL|%d|%d|%[^|]|%[^|]|%[^|]|%lf|%lf|%lf|%d",
+            sscanf(line, "BILL|%d|%d|%49[^|]|%14[^|]|%49[^|]|%lf|%lf|%lf|%d",
                    &billId, &customerId, nameKhach, phone, dateTime,
                    &total, &discount, &finalPrice, &itemCount);
 

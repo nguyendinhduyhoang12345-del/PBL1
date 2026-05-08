@@ -5,6 +5,11 @@
 #define MAX_GIO_HANG 30
 #define TONG_SO_MON 25
 
+#define RANK_BRONZE "Bronze"
+#define RANK_SILVER "Silver"
+#define RANK_GOLD "Gold"
+#define RANK_DIAMOND "Diamond"
+
 // Cấu trúc thực thể cơ bản
 typedef struct {
     int id;

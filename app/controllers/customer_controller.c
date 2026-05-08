@@ -40,16 +40,10 @@ void handleCustomer(Bill *currentBill) {
 
             // Lưu vào mảng toàn cục
             danhSachKH[soLuongKH] = newCust;
-            
-            // Nạp vào B-Tree (truyền địa chỉ phần tử trong mảng để trỏ đúng vùng nhớ)
+            soLuongKH++;
             insertBTree(&btreeRoot, &danhSachKH[soLuongKH]);
-            
-            // Gán vào hóa đơn hiện tại
             currentBill->customer = danhSachKH[soLuongKH];
             
-            // Tăng số lượng khách hàng sau khi đã gán xong xuôi
-            soLuongKH++;
-
             // GỌI FILE SERVICE ĐỂ LƯU XUỐNG FILE
             saveAllCustomersToFile();
 

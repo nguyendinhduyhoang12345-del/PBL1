@@ -108,6 +108,10 @@ void loadCustomersFromFile(BTreeNode** root) {
 
 void saveAllCustomersToFile() {
     FILE *f = fopen("app/database/khachhang.txt", "w");
+    if (f == NULL) {  // ✓ Kiểm tra lỗi
+        printf("[!] Loi: Khong the mo file khachhang.txt de ghi\n");
+        return;
+    }
     for (int i = 0; i < soLuongKH; i++) {
         // Thêm %d| ở đầu dòng
         fprintf(f, "%d|%s|%s|%s|%.3f|%s\n", 

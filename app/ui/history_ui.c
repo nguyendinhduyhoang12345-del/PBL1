@@ -103,6 +103,8 @@ void printCustomerHistory(HistoryNode* customerHistory) {
         printf("[!] Khach hang nay chua co lich su giao dich.\n");
         return;
     }
+
+    freeHistoryList(customerHistory); // Giải phóng bộ nhớ sau khi in xong
     
     printf("\n========================================================\n");
     printf("Tong so hoa don: %d | Tong doanh thu: %.3f VND\n", count, totalAmount);
