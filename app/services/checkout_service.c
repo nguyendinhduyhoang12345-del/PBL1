@@ -1,10 +1,15 @@
 #include "checkout_service.h"
 #include <string.h>
+#include <stdlib.h>
+#include "../services/hash_table_service.h"
+#include "../services/doubly_linked_list_service.h"
 
 double calculateSubtotal(Bill* bill) {
     double total = 0;
-    for (int i = 0; i < bill->itemCount; i++) {
-        total += bill->items[i].price * bill->items[i].quantity;
+    DLLNode* node = bill->cart->head;
+    while (node) {
+        total += node->item.price * node->item.quantity;
+        node = node->next;
     }
     return total;
 }

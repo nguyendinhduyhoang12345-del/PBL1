@@ -1,5 +1,6 @@
 #include "history_service.h"
 #include "btree_service.h"
+#include "../services/hash_table_service.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -12,12 +13,64 @@ extern BTreeNode* btreeRoot;
 // thêm hóa đơn vào linked list (bộ nhớ)
 int addBillToHistory(int customerId, Bill* bill) {
     HistoryNode* newNode = (HistoryNode*)malloc(sizeof(HistoryNode));
-    if (newNode == NULL) {  
+    if (newNode == NULL) {
         printf("[!] Loi: Khong du bo nho\n");
         return -1;
     }
     newNode->customerId = customerId;
-    newNode->bill = *bill; // Sao chép toàn bộ thông tin hóa đơn
+    newNode->bill.id = bill->id;
+    newNode->bill.customer = bill->customer;
+    newNode->bill.total = bill->total;
+    newNode->bill.discount = bill->discount;
+    newNode->bill.finalPrice = bill->finalPrice;
+    strcpy(newNode->bill.dateTime, bill->dateTime);
+    newNode->bill.itemsHash = NULL;
+    newNode->bill.cartDisplay = NULL;
+    newNode->bill.cart = NULL;  // Không copy DLL, chỉ copy items array
+
+    int count = 0;
+    OrderItem* arr = NULL;
+    int arrAllocated = 0;
+
+    if (bill->cart != NULL) {
+        // Tạo arr từ DLL
+        count = dllGetCount(bill->cart);
+        if (count > 0) {
+            arr = (OrderItem*)malloc(count * sizeof(OrderItem));
+            if (arr == NULL) {
+                printf("[!] Loi: Khong du bo nho\n");
+                free(newNode);
+                return -1;
+            }
+            DLLNode* node = bill->cart->head;
+            int i = 0;
+            while (node) {
+                arr[i++] = node->item;
+                node = node->next;
+            }
+            arrAllocated = 1;
+        }
+    } else if (bill->items != NULL) {
+        arr = bill->items;
+        count = bill->itemCount;
+    }
+
+    newNode->bill.itemCount = count;
+    if (count > 0) {
+        newNode->bill.items = (OrderItem*)malloc(count * sizeof(OrderItem));
+        if (newNode->bill.items == NULL) {
+            printf("[!] Loi: Khong du bo nho\n");
+            if (arrAllocated) free(arr);
+            free(newNode);
+            return -1;
+        }
+        memcpy(newNode->bill.items, arr, count * sizeof(OrderItem));
+    } else {
+        newNode->bill.items = NULL;
+    }
+
+    if (arrAllocated) free(arr);
+
     newNode->next = historyHead;
     historyHead = newNode;
     return 0;
@@ -48,17 +101,40 @@ void saveBillToHistoryFile(int customerId, Bill* bill) {
             bill->customer.rank,
             bill->customer.totalSpent);
 
-    // Lưu từng item
-    for (int i = 0; i < bill->itemCount; i++) {
-        fprintf(file, "ITEM|%d|%s|%.3f|%d|%d|%.3f|%s\n",
-                bill->items[i].id,
-                bill->items[i].name,
-                bill->items[i].price,
-                bill->items[i].quantity,
-                bill->items[i].option,
-                bill->items[i].totalPrice,
-                bill->items[i].note);
+    int count = 0;
+    OrderItem* arr = NULL;
+    int arrAllocated = 0;
+    if (bill->cart != NULL) {
+        count = dllGetCount(bill->cart);
+        if (count > 0) {
+            arr = (OrderItem*)malloc(count * sizeof(OrderItem));
+            if (arr == NULL) return;
+            DLLNode* node = bill->cart->head;
+            int i = 0;
+            while (node) {
+                arr[i++] = node->item;
+                node = node->next;
+            }
+            arrAllocated = 1;
+        }
+    } else if (bill->items != NULL) {
+        arr = bill->items;
+        count = bill->itemCount;
     }
+
+    // Lưu từng item
+    for (int i = 0; i < count; i++) {
+        fprintf(file, "ITEM|%d|%s|%.3f|%d|%d|%.3f|%s\n",
+                arr[i].id,
+                arr[i].name,
+                arr[i].price,
+                arr[i].quantity,
+                arr[i].option,
+                arr[i].totalPrice,
+                arr[i].note);
+    }
+
+    if (arrAllocated) free(arr);
 
     // Lưu dấu kết thúc
     fprintf(file, "END\n");
@@ -87,17 +163,40 @@ void saveBillToGlobalFile(Bill* bill, int customerId) {
             bill->customer.rank,
             bill->customer.totalSpent);
 
-    // Lưu từng item
-    for (int i = 0; i < bill->itemCount; i++) {
-        fprintf(file, "ITEM|%d|%s|%.3f|%d|%d|%.3f|%s\n",
-                bill->items[i].id,
-                bill->items[i].name,
-                bill->items[i].price,
-                bill->items[i].quantity,
-                bill->items[i].option,
-                bill->items[i].totalPrice,
-                bill->items[i].note);
+    int count = 0;
+    OrderItem* arr = NULL;
+    int arrAllocated = 0;
+    if (bill->cart != NULL) {
+        count = dllGetCount(bill->cart);
+        if (count > 0) {
+            arr = (OrderItem*)malloc(count * sizeof(OrderItem));
+            if (arr == NULL) return;
+            DLLNode* node = bill->cart->head;
+            int i = 0;
+            while (node) {
+                arr[i++] = node->item;
+                node = node->next;
+            }
+            arrAllocated = 1;
+        }
+    } else if (bill->items != NULL) {
+        arr = bill->items;
+        count = bill->itemCount;
     }
+
+    // Lưu từng item
+    for (int i = 0; i < count; i++) {
+        fprintf(file, "ITEM|%d|%s|%.3f|%d|%d|%.3f|%s\n",
+                arr[i].id,
+                arr[i].name,
+                arr[i].price,
+                arr[i].quantity,
+                arr[i].option,
+                arr[i].totalPrice,
+                arr[i].note);
+    }
+
+    if (arrAllocated) free(arr);
 
     // Lưu dấu kết thúc
     fprintf(file, "END\n");
@@ -113,6 +212,11 @@ void loadHistoryFromFile() {
 
     char line[500];
     Bill tempBill = {0};
+    OrderItem* tempItems = (OrderItem*)malloc(MAX_DON_HANG * sizeof(OrderItem));
+    if (tempItems == NULL) {
+        fclose(file);
+        return;
+    }
     int itemCount = 0;
     int billStarted = 0;
     int currentCustomerId = -1;
@@ -153,13 +257,16 @@ void loadHistoryFromFile() {
             tempBill.itemCount = itemCountInFile;
             strcpy(tempBill.customer.rank, rankKhach);
             tempBill.customer.totalSpent = totalSpent;
+            tempBill.items = tempItems;
+            tempBill.itemsHash = NULL;
+            tempBill.cartDisplay = NULL;
 
             itemCount = 0;
             currentCustomerId = customerId;
             billStarted = 1;
         }
         else if (strncmp(line, "ITEM|", 5) == 0 && billStarted) {
-            if (itemCount < MAX_GIO_HANG) {
+            if (itemCount < MAX_DON_HANG) {
                 int id, quantity, option;
                 char name[50], note[100];
                 double price, totalPrice;
@@ -186,12 +293,16 @@ void loadHistoryFromFile() {
             }
 
             tempBill = (Bill){0};
+            tempBill.items = tempItems;
+            tempBill.itemsHash = NULL;
+            tempBill.cartDisplay = NULL;
             itemCount = 0;
             billStarted = 0;
             currentCustomerId = -1;
         }
     }
 
+    free(tempItems);
     fclose(file);
 }
 
@@ -203,8 +314,19 @@ HistoryNode* getCustomerHistory(int customerId) {
     while (current != NULL) {
         if (current->customerId == customerId) {
             HistoryNode* newNode = (HistoryNode*)malloc(sizeof(HistoryNode));
+            if (newNode == NULL) {
+                break;
+            }
             *newNode = *current;
             newNode->next = result; // Thêm vào đầu danh sách kết quả
+            
+            if (current->bill.items != NULL) {
+                newNode->bill.items = (OrderItem*)malloc(current->bill.itemCount * sizeof(OrderItem));
+                if (newNode->bill.items != NULL) {
+                    memcpy(newNode->bill.items, current->bill.items, current->bill.itemCount * sizeof(OrderItem));
+                }
+            }
+            
             result = newNode; // Cập nhật lại head của danh sách kết quả
         }
         current = current->next;
@@ -218,6 +340,9 @@ void freeHistoryList(HistoryNode* head) {
     while (head != NULL) {
         HistoryNode* temp = head;
         head = head->next;
+        if (temp->bill.items != NULL) {
+            free(temp->bill.items);
+        }
         free(temp);
     }
 }

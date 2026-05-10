@@ -18,6 +18,9 @@
 #include "app/services/file_service.h"
 #include "app/services/history_service.h"
 #include "app/services/report_service.h"
+#include "app/services/hash_table_service.h"
+#include "app/services/doubly_linked_list_service.h"
+#include "app/services/menu_hash_service.h"
 
 
 // ĐỊNH NGHĨA BIẾN TOÀN CỤC (Phải có ở main.c để link dữ liệu)
@@ -26,15 +29,21 @@ Customer danhSachKH[1000];
 int soLuongKH = 0;
 BTreeNode* btreeRoot = NULL;
 HistoryNode* historyHead = NULL;
+HashTable* menuHash = NULL;
+HashTable hashTable = {0};
+DoublyLinkedList doublyLinkedList = {0};
 
 int main() {
     
     srand(time(NULL));
     loadMenuFromFile("app/database/menu.txt");
+    menuHash = loadMenuToHashTable("app/database/menu.txt");
     loadCustomersFromFile(&btreeRoot);
     loadHistoryFromFile();
     system("pause");
-    Bill currentBill = {0}; // Khởi tạo giỏ hàng rỗng
+    Bill currentBill = {0};
+    currentBill.cart = dllCreate();
+    currentBill.itemCount = 0;
     int choice;
 
     while(1) {
@@ -95,5 +104,6 @@ int main() {
                 system("pause");
         }
     }
+    dllFree(currentBill.cart);
     return 0;
 }

@@ -2,7 +2,6 @@
 #define MODELS_H
 
 #define MAX_DON_HANG 100
-#define MAX_GIO_HANG 30
 #define TONG_SO_MON 25
 
 #define RANK_BRONZE "Bronze"
@@ -38,10 +37,14 @@ typedef struct {
     char rank[20];     // Hạng thành viên (Mới, Bạc, Vàng, VIP)
 } Customer;
 
+typedef struct HashTable HashTable;
+typedef struct DoublyLinkedList DoublyLinkedList;
+
 typedef struct {
     int id;
     Customer customer;
-    OrderItem items[MAX_GIO_HANG];
+    DoublyLinkedList* cart;  // Thay thế itemsHash và cartDisplay
+    OrderItem* items;        // Giữ để tương thích history
     int itemCount;
     double total;
     double discount;
@@ -71,10 +74,38 @@ typedef struct BTreeNode {
     int isLeaf;
 } BTreeNode;
 
+#define HASH_TABLE_SIZE 31
+
+typedef struct HashNode {
+    int itemId;
+    OrderItem item;
+    struct HashNode* next;
+} HashNode;
+
+typedef struct HashTable {
+    HashNode** table;
+    int size;
+    int count;
+} HashTable;
+
+typedef struct DLLNode {
+    OrderItem item;
+    int position;
+    struct DLLNode* next;
+    struct DLLNode* prev;
+} DLLNode;
+
+typedef struct DoublyLinkedList {
+    DLLNode* head; 
+    DLLNode* tail;
+    int count;
+} DoublyLinkedList;
+
 extern MenuItem menu[TONG_SO_MON];
 extern Customer danhSachKH[1000];
 extern int soLuongKH;
 extern BTreeNode* btreeRoot;
 extern HistoryNode* historyHead;
 
-#endif
+
+`n`n#endif

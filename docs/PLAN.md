@@ -44,25 +44,25 @@
 
 ## 2. GIẢI PHÁP ĐỀ XUẤT
 
-### 2.1 Hash Table cho Order Management
+### 2.1 Hash Table cho Order Management (Chức năng 1: Đặt món)
 **Mục tiêu**: 
-- Cải thiện tốc độ tìm kiếm và quản lý items
+- Cải thiện tốc độ tìm kiếm và quản lý items khi đặt món
 - Hỗ trợ tự động cộng số lượng khi thêm cùng 1 món
-- Xóa/sửa nhanh hơn
+- Không giới hạn số lượng items (hết bộ nhớ)
 
 **Lợi ích**:
 - Tìm kiếm item: O(1) trung bình
 - Thêm item trùng: tự động cộng SL thay vì tạo duplicate
-- Không giới hạn số lượng items (hết bộ nhớ)
 - Cơ cấu giảm duy trì `itemCount`
 
-### 2.2 Doubly Linked List cho Cart Edit/View
+### 2.2 Hash Table + Doubly Linked List cho Cart Edit/View (Chức năng 2: Xem và chỉnh sửa giỏ hàng)
 **Mục tiêu**:
-- Hiệu quả hơn trong việc xem, chỉnh sửa giỏ hàng
-- Duyệt tới trước hoặc lùi lại trong danh sách
+- Hash Table: Lưu trữ dữ liệu chính xác, lookup nhanh
+- Doubly Linked List: Hiển thị và thao tác giỏ hàng theo STT
+- Kết hợp 2 cấu trúc để tối ưu hiệu suất
 
 **Lợi ích**:
-- Dễ thêm/xóa giữa danh sách (không cần dịch chuyển)
+- Thêm/xóa/sửa nhanh: Hash Table O(1), DLL O(1) cho thao tác
 - Duyệt 2 chiều (forward/backward) cho hiển thị
 - Linh hoạt trong thao tác giỏ hàng
 
@@ -125,7 +125,56 @@ void hashTableFree(HashTable* ht);
 - Xử lý collision: Chaining (linked list)
 - Insert: Tìm vị trí, nếu trùng SL (quantity) += SL nhập
 - Delete: Tìm node, xóa khỏi chain
-- toArray: Duyệt tất cả node, convert về OrderItem array
+- Get: Tìm node theo key và trả pointer
+- UpdateQuantity: Nếu tồn tại, đổi quantity và totalPrice
+- toArray: Duyệt tất cả node, copy vào array động, trả về qua `count`
+- Free: Giải phóng tất cả node và bảng pointer
+
+#### 3.1.3 Chi tiết hàm trong `hash_table_service`
+- `HashTable* hashTableCreate(int size)`
+  - Tạo struct, cấp phát `table = malloc(size * sizeof(HashNode*))`
+  - Khởi tạo mỗi bucket = NULL
+  - Trả về con trỏ `HashTable`
+
+- `int hashFunction(int key, int tableSize)`
+  - Trả `key % tableSize`
+  - Nếu giá trị âm, chuyển thành dương bằng `+ tableSize`
+
+- `int hashTableInsert(HashTable* ht, OrderItem* item)`
+  - Tính bucket bằng hashFunction(item->id, ht->size)
+  - Duyệt chain:
+    - Nếu node tồn tại với `itemId`, cộng `quantity`, cập nhật `totalPrice`
+    - Nếu không tồn tại, tạo node mới, copy item, thêm vào đầu/bucket hoặc cuối chain
+  - Tăng `ht->count` nếu thêm node mới
+  - Trả 0 nếu thành công, -1 nếu lỗi bộ nhớ
+
+- `OrderItem* hashTableGet(HashTable* ht, int itemId)`
+  - Tính bucket, duyệt chain
+  - Nếu tìm thấy, trả pointer đến `item`
+  - Nếu không, trả NULL
+
+- `int hashTableDelete(HashTable* ht, int itemId)`
+  - Tính bucket, duyệt chain để tìm node
+  - Nếu tìm thấy, unlink node khỏi chain, free node, giảm `count`
+  - Trả 0 nếu xóa thành công, -1 nếu không tìm thấy
+
+- `int hashTableUpdateQuantity(HashTable* ht, int itemId, int newQty)`
+  - Lấy node qua `hashTableGet`
+  - Nếu tồn tại:
+    - Cập nhật `quantity` và `totalPrice = price * quantity`
+    - Nếu `newQty <= 0`, gọi `hashTableDelete`
+  - Trả 0 nếu thành công, -1 nếu không tìm thấy
+
+- `OrderItem* hashTableToArray(HashTable* ht, int* count)`
+  - Tạo array `malloc(ht->count * sizeof(OrderItem))`
+  - Duyệt mỗi bucket và node, copy item vào array
+  - Gán `*count = ht->count`
+  - Trả con trỏ array cho caller
+
+- `void hashTableFree(HashTable* ht)`
+  - Duyệt từng bucket
+  - Free tất cả node trong chain
+  - Free `ht->table` và `ht`
 
 ### 3.2 Doubly Linked List Implementation (Để hiển thị & edit giỏ hàng)
 
@@ -162,6 +211,9 @@ int dllRemoveAt(DoublyLinkedList* dll, int position);
 int dllUpdateQuantity(DoublyLinkedList* dll, int position, int newQty);
 
 // Lấy item tại vị trí
+DLLNode* dllGetNodeAt(DoublyLinkedList* dll, int position);
+
+// Lấy item tại vị trí (pointer)
 OrderItem* dllGetAt(DoublyLinkedList* dll, int position);
 
 // Duyệt từ đầu
@@ -180,10 +232,56 @@ void dllFree(DoublyLinkedList* dll);
 ```
 
 #### 3.2.2 Tạo file mới: `app/services/doubly_linked_list_service.c`
-- Append: Tạo node, link vào tail
-- RemoveAt: Tìm node, unlink 2 chiều
-- UpdateQuantity: Tìm node, update `item.quantity` và `item.totalPrice`
-- GetAt: Duyệt từ đầu/cuối (tối ưu)
+- Append: Tạo node mới, đặt `position = count + 1`, nối vào `tail`
+- RemoveAt: Tìm node theo position, unlink `prev->next` và `next->prev`, free node
+- UpdateQuantity: Lấy node theo position, cập nhật `quantity`, `totalPrice`
+- GetAt: Duyệt từ đầu hoặc từ cuối nếu position gần đuôi
+- UpdatePositions: Sau xóa, đọc lại toàn bộ danh sách và đánh lại vị trí
+- Free: Free cả danh sách
+
+#### 3.2.3 Chi tiết hàm trong `doubly_linked_list_service`
+- `DoublyLinkedList* dllCreate()`
+  - Cấp phát struct, head/tail = NULL, count = 0
+
+- `int dllAppend(DoublyLinkedList* dll, OrderItem* item)`
+  - Tạo node mới, copy `*item`
+  - `position = dll->count + 1`
+  - Nếu dll rỗng: head = tail = node
+  - Ngược lại: nối vào tail, cập nhật tail
+  - Tăng count
+  - Trả 0 nếu thành công, -1 nếu lỗi
+
+- `DLLNode* dllGetNodeAt(DoublyLinkedList* dll, int position)`
+  - Nếu position <= count/2, duyệt từ `head`
+  - Ngược lại duyệt từ `tail`
+  - Trả pointer node hoặc NULL
+
+- `OrderItem* dllGetAt(DoublyLinkedList* dll, int position)`
+  - Dùng `dllGetNodeAt`, trả `&node->item`
+
+- `int dllRemoveAt(DoublyLinkedList* dll, int position)`
+  - Tìm node bằng `dllGetNodeAt`
+  - Nếu node tồn tại:
+    - Nếu node->prev != NULL, node->prev->next = node->next
+    - Nếu node->next != NULL, node->next->prev = node->prev
+    - Nếu node là head/tail, cập nhật head/tail
+    - Free node
+    - Giảm count
+    - Gọi `dllUpdatePositions(dll)`
+    - Trả 0
+  - Nếu không, trả -1
+
+- `int dllUpdateQuantity(DoublyLinkedList* dll, int position, int newQty)`
+  - Tìm node
+  - Nếu found: node->item.quantity = newQty; node->item.totalPrice = newQty * node->item.price;
+  - Trả 0 nếu thành công, -1 nếu không tìm thấy
+
+- `void dllUpdatePositions(DoublyLinkedList* dll)`
+  - Duyệt từ `head`, gán position lần lượt 1..count
+
+- `void dllFree(DoublyLinkedList* dll)`
+  - Duyệt và free cung toàn bộ node
+  - Free struct dll
 
 ### 3.3 Sửa models.h
 ```c
@@ -200,6 +298,104 @@ typedef struct {
     char dateTime[50];
 } Bill;
 ```
+
+#### 3.3.1 Các struct mới và vị trí file
+- `models.h`: chỉ định định nghĩa `HashTable` và `DoublyLinkedList` qua include header service.
+- `app/services/hash_table_service.h`: định nghĩa `HashNode`, `HashTable`, prototype hàm hash table.
+- `app/services/doubly_linked_list_service.h`: định nghĩa `DLLNode`, `DoublyLinkedList`, prototype hàm list.
+- `models.h` cần `#include "../services/hash_table_service.h"` và `#include "../services/doubly_linked_list_service.h"` nếu cần.
+
+#### 3.3.2 Sửa `Bill` struct cụ thể
+- `itemsHash`: Lưu trữ dữ liệu chính xác, dùng cho CN1 (đặt món) và CN2 (lưu trữ)
+- `cartDisplay`: Mirror của hash table, dùng cho hiển thị & edit giỏ hàng theo STT trong CN2
+- `itemCount`: Đồng bộ với `cartDisplay->count` (hoặc `itemsHash->count`)
+
+### 3.4 Chi tiết hàm controller và service cần viết
+
+#### 3.4.1 `app/controllers/order_controller.c`
+- `void addToCart(Bill *currentBill)`
+  - Input: `currentBill`, người dùng nhập `id`, `quantity`, `option`, `note`
+  - Xử lý:
+    1. Kiểm tra tồn kho, giới hạn món chính.
+    2. Tạo `OrderItem item` từ `menu[id-1]` và ghi chú.
+    3. Gọi `hashTableInsert(currentBill->itemsHash, &item)`.
+    4. Nếu item mới, gọi `dllAppend(currentBill->cartDisplay, &item)`.
+    5. Cập nhật `currentBill->itemCount = currentBill->cartDisplay->count`.
+  - Output: cart cập nhật, stock giảm.
+
+- `void removeFromCart(Bill *currentBill)`
+  - Input: `currentBill`, STT item muốn xóa.
+  - Xử lý:
+    1. Tìm `DLLNode* node = dllGetNodeAt(currentBill->cartDisplay, position)`.
+    2. Nếu node tồn tại, lưu `itemId` và `quantity`.
+    3. Gọi `hashTableDelete(currentBill->itemsHash, itemId)`.
+    4. Gọi `dllRemoveAt(currentBill->cartDisplay, position)`.
+    5. Trả hàng tồn kho: `menu[itemId-1].stock += quantity`.
+    6. Cập nhật `currentBill->itemCount`.
+  - Output: giỏ hàng và hash table đồng bộ.
+
+- `void updateQuantity(Bill *currentBill)`
+  - Input: `currentBill`, STT item, `newQty`.
+  - Xử lý:
+    1. Tìm node bằng `dllGetNodeAt`.
+    2. Kiểm tra giới hạn món chính và tồn kho.
+    3. Gọi `dllUpdateQuantity(currentBill->cartDisplay, position, newQty)`.
+    4. Gọi `hashTableUpdateQuantity(currentBill->itemsHash, itemId, newQty)`.
+    5. Nếu `newQty == 0`, xóa node và hash table.
+    6. Cập nhật `currentBill->itemCount`.
+
+- `void handleOrderMenu(Bill* currentBill)`
+  - Input: `currentBill`
+  - Xử lý: nếu `currentBill->itemsHash == NULL`, khởi tạo hash table và DLL.
+  - Gọi `showMenuUI()` rồi `addToCart(currentBill)`.
+
+- `void handleCartMenu(Bill* currentBill)`
+  - Input: `currentBill`
+  - Xử lý:
+    1. Hiển thị `showCartUI(currentBill)`.
+    2. Nhận lựa chọn xóa hoặc sửa.
+    3. Gọi `removeFromCart` hoặc `updateQuantity` tương ứng.
+
+#### 3.4.2 `app/ui/cart_ui.c`
+- `void showCartUI(Bill *currentBill)`
+  - Input: `currentBill`
+  - Xử lý:
+    1. Nếu `itemCount == 0`, in giỏ trống.
+    2. Gọi `hashTableToArray(currentBill->itemsHash, &count)`.
+    3. In `STT`, `Ten mon`, `SL`, `Don gia`, `Thanh tien`.
+    4. In thêm `option` và `note` nếu có.
+    5. Free array sau khi in.
+  - Output: hiển thị giỏ hàng từ hash table.
+
+#### 3.4.3 `app/services/checkout_service.c`
+- `double calculateSubtotal(Bill* bill)`
+  - Input: `bill`
+  - Xử lý: lấy array từ `hashTableToArray`, cộng `totalPrice` từng item.
+  - Output: subtotal.
+
+- `double getDiscountPercent(char* rank)`
+  - Giữ nguyên hàm cũ, không cần thay đổi.
+
+- `void updateCustomerRank(Customer* cust)`
+  - Giữ nguyên hàm cũ, nếu có sử dụng `bill->finalPrice`.
+
+#### 3.4.4 `app/services/history_service.c`
+- `int addBillToHistory(int customerId, Bill* bill)`
+  - Input: `customerId`, `bill`
+  - Xử lý:
+    1. Tạo node mới.
+    2. Copy thông tin bill, nhưng trước đó convert `itemsHash` thành `OrderItem* arr`.
+    3. Gán `node->bill.itemCount = count`.
+    4. Push node vào `historyHead`.
+  - Output: lưu lịch sử trong bộ nhớ.
+
+- `void saveBillToHistoryFile(int customerId, Bill* bill)`
+  - Input: `customerId`, `bill`
+  - Xử lý: convert hash table thành array, ghi BILL rồi mỗi ITEM.
+
+- `void saveBillToGlobalFile(Bill* bill, int customerId)`
+  - Input: `bill`, `customerId`
+  - Xử lý: giống `saveBillToHistoryFile`, chỉ khác file lịch sử chung.
 
 ---
 
@@ -516,9 +712,10 @@ Flow: Add → View → Edit → Delete → Checkout
 - **DLL Sync**: Mỗi lần insert/delete hash table cũng phải update DLL
 - **UI Display**: Dùng `hashTableToArray()` để lấy array rồi hiển thị
 - **Backward Compat**: Phần khác (checkout, history) sử dụng items array như cũ
+- **Architecture**: Hash Table cho CN1 (đặt món), Hash Table + DLL cho CN2 (giỏ hàng)
 
 ---
 
-**Cập nhật lần cuối**: 08/05/2026
+**Cập nhật lần cuối**: 09/05/2026
 **Người lập**: GitHub Copilot
 **Trạng thái**: Planning Phase ✓ Ready for Implementation
