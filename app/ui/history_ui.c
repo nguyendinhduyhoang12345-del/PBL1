@@ -13,9 +13,9 @@ void printAllHistory() {
     }
     
     printf("\n============== TOAN BO LICH SU HOA DON ==============\n");
-    printf("%-8s | %-12s | %-20s | %-10s | %-16s | %-10s | %-10s | %-6s\n",
-       "Bill ID", "Customer ID", "Thoi gian", "Rank", "Tich luy", "So tien", "Giam gia", "Items");
-    printf("===============================================================================================\n");
+    printf("%-8s | %-12s | %-12s | %-20s | %-10s | %-16s | %-10s | %-10s | %-6s\n",
+       "Bill ID", "Customer ID", "SDT", "Thoi gian", "Rank", "Tich luy", "So tien", "Giam gia", "Items");
+    printf("=========================================================================================================\n");
     
     double totalAmount = 0;
     int count = 0;
@@ -37,8 +37,8 @@ void printAllHistory() {
                    &total, &discount, &finalPrice, &itemCount,
                    rank, &totalSpent);
 
-            printf("%-8d | %-12d | %-20s | %-10s | %16.3f | %10.3f | %10.3f | %-6d\n",
-                   billId, customerId, dateTime, rank, totalSpent, finalPrice, discount, itemCount);
+            printf("%-8d | %-12d | %-12s | %-20s | %-10s | %16.3f | %10.3f | %10.3f | %-6d\n",
+                   billId, customerId, phone, dateTime, rank, totalSpent, finalPrice, discount, itemCount);
             totalAmount += finalPrice;
             count++;
         }
@@ -65,38 +65,26 @@ void printCustomerHistory(HistoryNode* customerHistory) {
     int count = 0;
     HistoryNode* current = customerHistory;
     
-    while (current != NULL) {
-        printf("\n--- Hoa don so: %d | Ngay: %s ---\n", current->bill.id, current->bill.dateTime);
-        printf("Khach hang: %s | SDT: %s\n", current->bill.customer.name, current->bill.customer.phone);
-        printf("Rank: %s | Tong tich luy: %.3f VND\n",
-               current->bill.customer.rank,
-               current->bill.customer.totalSpent);
-        printf("%-4s | %-4s | %-25s | %-3s | %-8s | %-20s | %12s\n", "STT", "ID", "Ten mon", "SL", "Option", "Ghi chu", "Thanh tien");
-        printf("-----------------------------------------------------------------------------------------\n");
+    printf("%-8s | %-12s | %-20s | %-8s | %-12s | %-10s | %-12s\n",
+           "Bill ID", "Cust ID", "Ngay", "So mon", "Tong tien", "Giam gia", "Thanh toan");
+    printf("============================================================================================\n");
 
-        int i = 1;
+    while (current != NULL) {
+        int itemCount = 0;
         CartNode *node = current->bill.cart.head;
         while (node != NULL) {
-            char optLabel[16];
-            if (node->item.option == 1) strcpy(optLabel, "Cot let");
-            else if (node->item.option == 2) strcpy(optLabel, "Suon cay");
-            else strcpy(optLabel, "Khong");
-
-            printf("%-4d | %-4d | %-25.25s | %-3d | %-8s | %-20.20s | %12.3f\n",
-                   i + 1,
-                   node->item.id,
-                   node->item.name,
-                   node->item.quantity,
-                   optLabel,
-                   node->item.note,
-                   node->item.totalPrice);
+            itemCount += node->item.quantity; // Tính tổng số món bằng cách cộng dồn số lượng của từng item
             node = node->next;
-            i++;
         }
 
-        printf("--------------------------------------------------------\n");
-        printf("Tong tinh: %.3f VND | Giam gia: %.3f VND | Tong: %.3f VND\n",
-               current->bill.total, current->bill.discount, current->bill.finalPrice);
+        printf("%-8d | %-12d | %-20s | %-8d | %12.0f | %10.0f | %12.0f\n",
+               current->bill.id,
+               current->customerId,
+               current->bill.dateTime,
+               itemCount,
+               current->bill.total,
+               current->bill.discount,
+               current->bill.finalPrice);
 
         totalAmount += current->bill.finalPrice;
         count++;
