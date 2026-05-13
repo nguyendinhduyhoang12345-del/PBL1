@@ -8,23 +8,19 @@
 #include "../services/hash_service.h"
 #include "../services/cart_service.h"
 
-CartNode *findCartNodeById(Cart *cart, int itemId) {
-    CartNode *node = cart->head;
+void addToCart(Bill *currentBill, OrderItem item) {
+    CartNode *node = currentBill->cart.head;
     while (node) {
-        if (node->item.id == itemId) return node;
+        if (node->item.id == item.id &&
+            node->item.option == item.option &&
+            strcmp(node->item.note, item.note) == 0) {
+            node->item.quantity += item.quantity;
+            node->item.totalPrice = node->item.quantity * node->item.price;
+            return;
+        }
         node = node->next;
     }
-    return NULL;
-}
-
-void addToCart(Bill *currentBill, OrderItem item) {
-    CartNode *existing = findCartNodeById(&currentBill->cart, item.id);
-    if (existing) {
-        existing->item.quantity += item.quantity;
-        existing->item.totalPrice = existing->item.quantity * existing->item.price;
-        return;
-    }
-    cartAddItem(&currentBill->cart, item); 
+    cartAddItem(&currentBill->cart, item);
 }
 
 void removeFromCart(Bill *currentBill) {
@@ -137,8 +133,12 @@ void handleOrderMenu(Bill* currentBill) {
         }
          
         int slNhap = getValidInt(">> Nhap so luong: ");
-        if (slNhap <= 0 || slNhap > menuItem->stock) {
+        if (slNhap <= 0 || slNhap > menuItem->stock || slNhap > 5) {
             printf("  !! Loi: Kho ko du hoac SL ko hop le (Con: %d)\n", menuItem->stock);
+            continue;
+        }
+        if (idNhap <= 12 && countMain + slNhap > 5) {
+            printf("  !! Loi: Tong so mon chinh khong duoc vuot qua 5 (Dang co: %d).\n", countMain);
             continue;
         }
 

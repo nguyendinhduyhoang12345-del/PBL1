@@ -1,6 +1,6 @@
 1|0901234567|Nguyen Van Hoang|123 Le Loi, Da Nang|392000.000|Bronze
 2|0902345678|Tran Thi Loan|456 Hung Vuong, Hue|200000.000|Bronze
-3|0903456789|Huynh Van Tam|789 Phan Chu Trinh, HCM|0.000|Bronze
+3|0903456789|Huynh Van Tam|789 Phan Chu Trinh, HCM|178000.000|Bronze
 4|0904567890|Le Quang Minh|101 Tran Phu, Ha Noi|0.000|Bronze
 5|0905678901|Thai Nguyen Anh Kiet|202 Nguyen Hue, Da Nang|0.000|Bronze
 6|0906789012|Le Hoang Truong|303 Ly Thai To, Da Nang|0.000|Bronze
