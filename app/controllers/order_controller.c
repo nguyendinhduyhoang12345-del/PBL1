@@ -82,7 +82,7 @@ void updateQuantity(Bill *currentBill) {
         }
         countMain = countMain - oldQty + newQty; // trừ đi số lượng cũ và cộng số lượng mới
         if (countMain > 5) {
-            printf("  !! Loi: Tong so mon chinh khong duoc vuot qua 5 (Dang co: %d).\n", countMain);
+            printf("  !! Loi: Tong so mon chinh khong duoc vuot qua 5.\n");
             return;
         }
     }

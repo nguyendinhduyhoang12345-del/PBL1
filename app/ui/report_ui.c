@@ -7,34 +7,33 @@ void printReportToScreen(double totalRevenue, int totalBills, int totalItems, Cu
     char dateTime[50];
     getCurrentDateTime(dateTime, sizeof(dateTime));
 
-    printf("\n");
-    printf("====================================================\n");
-    printf("         BAO CAO DOANH THU QUAN COM TAM\n");
-    printf("====================================================\n");
+    printf("\n" CYAN "====================================================\n" RESET);
+    printf(CYAN "         BAO CAO DOANH THU QUAN COM TAM\n" RESET);
+    printf(CYAN "====================================================\n" RESET);
     printf("Ngay tao: %s\n", dateTime);
-    printf("====================================================\n\n");
+    printf(CYAN "====================================================\n\n" RESET);
 
     printf("TONG QUAN:\n");
-    printf("  Tong so hoa don: %d\n", totalBills);
-    printf("  Tong doanh thu: %.3f VND\n", totalRevenue);
-    printf("  Tong so mon da ban: %d\n", totalItems);
-    printf("  Doanh thu trung binh/bill: %.3f VND\n",
+    printf("  Tong so hoa don: " YELLOW_BOLD "%d" RESET "\n", totalBills);
+    printf("  Tong doanh thu: " GREEN "%.3f VND" RESET "\n", totalRevenue);
+    printf("  Tong so mon da ban: " YELLOW_BOLD "%d" RESET "\n", totalItems);
+    printf("  Doanh thu trung binh/bill: " GREEN "%.3f VND" RESET "\n",
            totalBills > 0 ? totalRevenue / totalBills : 0.0);
     printf("\n");
 
-    printf("PHAN TICH THEO KHACH HANG:\n");
-    printf("%-12s | %-12s | %-15s\n", "Khach ID", "So HD", "Doanh thu");
-    printf("--------------------------------------------\n");
+    printf(CYAN "PHAN TICH THEO KHACH HANG:\n" RESET);
+    printf(CYAN "%-12s | %-12s | " GREEN "%-15s" RESET "\n", "Khach ID", "So HD", "Doanh thu");
+    printf(CYAN "--------------------------------------------\n" RESET);
 
     for (int i = 0; i < customerCount; i++) {
-        printf("%-12d | %-12d | %15.3f\n",
+        printf(YELLOW_BOLD "%-12d" RESET " | %-12d | " GREEN "%15.3f" RESET "\n",
                customerStats[i].customerId,
                customerStats[i].billCount,
                customerStats[i].revenue);
     }
 
     printf("\n");
-    printf("====================================================\n");
+    printf(CYAN "====================================================\n" RESET);
 }
 
 // Xuất báo cáo ra file report_doanhthu.txt

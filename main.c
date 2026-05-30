@@ -9,6 +9,7 @@
 
 #include "app/ui/menu_ui.h"
 #include "app/ui/cart_ui.h"
+#include "app/ui/welcome_ui.h"
 
 #include "app/controllers/order_controller.h"
 #include "app/controllers/customer_controller.h"
@@ -36,6 +37,8 @@ int main() {
     loadMenuFromFile("app/database/menu.txt");
     loadCustomersFromFile(&btreeRoot);
     loadHistoryFromFile();
+    
+    printWelcomeScreen();
     system("pause");
     Bill currentBill = {0}; // Khởi tạo giỏ hàng rỗng
     cartInit(&currentBill.cart); // Khởi tạo giỏ hàng trong hóa đơn
@@ -43,17 +46,17 @@ int main() {
 
     while(1) {
         system("cls"); // Hoặc "clear" trên Mac/Linux
-        printf("====================================================\n");
-        printf("          HE THONG QUAN LY QUAN COM TAM PBL1\n");
-        printf("====================================================\n");
-        printf("  1. Dat mon\n");
-        printf("  2. Xem va chinh sua gio hang\n");
-        printf("  3. Nhap thong tin KH\n");
-        printf("  4. Thanh toan\n");
-        printf("  5. Xem lich su\n");
-        printf("  6. Thong ke doanh thu va xuat file bao cao\n");
-        printf("  0. Thoat\n");
-        printf("====================================================\n");
+        printf(CYAN "====================================================" RESET "\n");
+        printf(CYAN "          " RESET WHITE "HE THONG QUAN LY QUAN COM TAM PBL1" RESET CYAN "\n");
+        printf(CYAN "====================================================" RESET "\n");
+        printf(WHITE "  1. Dat mon" RESET "\n");
+        printf(WHITE "  2. Xem va chinh sua gio hang" RESET "\n");
+        printf(WHITE "  3. Nhap thong tin KH" RESET "\n");
+        printf(WHITE "  4. Thanh toan" RESET "\n");
+        printf(WHITE "  5. Xem lich su" RESET "\n");
+        printf(WHITE "  6. Thong ke doanh thu va xuat file bao cao" RESET "\n");
+        printf(WHITE "  0. Thoat" RESET "\n");
+        printf(CYAN "====================================================" RESET "\n");
         
         choice = getValidInt("-> Chon chuc nang: ");
         if (choice < 0 || choice > 6) {

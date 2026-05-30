@@ -3,6 +3,7 @@
 #include <string.h>
 #include "customer_controller.h"
 #include "../services/btree_service.h"
+#include "../utils/helper.h"
 #include "../utils/validator.h"
 #include "../services/file_service.h"
 
@@ -15,13 +16,16 @@ void handleCustomer(Bill *currentBill) {
     Customer* found = searchBTree(btreeRoot, sdt);
 
     if (found != NULL) {
-        // Áp dụng định dạng %.3f
-        printf(" => Tim thay: [%s] | Hang: %s | Tich luy: %.3f VND\n", found->name, found->rank, found->totalSpent);
+        const char *rankColor = getRankColor(found->rank);
+        printf(" => Tim thay: [%s%s%s] | Hang: %s%s%s | Tich luy: %s%.3f VND%s\n",
+               YELLOW_BOLD, found->name, RESET,
+               rankColor, found->rank, RESET,
+               GREEN, found->totalSpent, RESET);
         currentBill->customer = *found; // Gán vào hóa đơn hiện tại
 
     } else {
         printf(" !! Dien thoai chua co trong he thong. Dang ky moi?\n");
-        printf(" 1. Co | 0. Bo qua (Khach vang lai)\n");
+        printf(" 1. Co | 0. Bo qua (Guest)\n");
         int choice = getValidInt("-> Chon: ");
         
         if (choice == 1) {
@@ -48,6 +52,9 @@ void handleCustomer(Bill *currentBill) {
             saveAllCustomersToFile();
 
             printf(" => Dang ky thanh cong! ID cua quy khach la: %d\n", newCust.id);
+            printf("    Ten khach hang: %s%s%s\n", YELLOW_BOLD, newCust.name, RESET);
+            printf("    So tien tich luy: %s%.3f VND%s\n", GREEN, newCust.totalSpent, RESET);
+            printf("    Hang: %s%s%s\n", getRankColor(newCust.rank), newCust.rank, RESET);
         }
     }
 }

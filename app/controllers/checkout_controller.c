@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "../utils/helper.h"
+
 #include "../services/checkout_service.h"
 #include "../services/file_service.h" 
 #include "../services/btree_service.h" 
@@ -47,17 +49,17 @@ void processCheckout(Bill* currentBill) {
 
 
     // --- BƯỚC 2: TƯƠNG TÁC NHẬP LIỆU VỚI THU NGÂN ---
-    printf(">> TONG TIEN BAN DAU   : %15.3f VND\n", subtotal);
+    printf(">> TONG TIEN BAN DAU   : " GREEN "%15.3f VND" RESET "\n", subtotal);
     
     if (khGoc != NULL) {
-        printf(">> RANK KHACH HANG     : %-10s (Giam %.0f%%)\n", khGoc->rank, discountRate * 100);
-        printf(">> SO TIEN DUOC GIAM   : -%14.3f VND\n", discountAmount);
+        printf(">> RANK KHACH HANG     : %s%-10s%s (Giam %.0f%%)\n", getRankColor(khGoc->rank), khGoc->rank, RESET, discountRate * 100);
+        printf(">> SO TIEN DUOC GIAM   : -" GREEN "%14.3f VND" RESET "\n", discountAmount);
     } else {
-        printf(">> RANK KHACH HANG     : Khach vang lai (Khong giam gia)\n");
+        printf(">> RANK KHACH HANG     : " YELLOW_BOLD "Guest" RESET " (Khong giam gia)\n");
     }
     
     printf("----------------------------------------------------\n");
-    printf(">> TONG TIEN CAN TRA   : %15.3f VND\n", finalPrice);
+    printf(">> TONG TIEN CAN TRA   : " GREEN "%15.3f VND" RESET "\n", finalPrice);
     printf("----------------------------------------------------\n");
 
     // Tương tác với thu ngân
@@ -99,9 +101,9 @@ void processCheckout(Bill* currentBill) {
             // 5. Hiển thị thông tin cập nhật
             printf("\n------------------------------------------------------------\n");
             printf("[ CAP NHAT KHACH HANG ]\n");
-            printf(">> Tong chi tieu cu : %15.3f VND\n", oldTotal);
-            printf(">> Tong chi tieu moi: %15.3f VND\n", khGoc->totalSpent);
-            printf(">> Hang hien tai    : %s\n", khGoc->rank);
+            printf(">> Tong chi tieu cu : " GREEN "%15.3f VND" RESET "\n", oldTotal);
+            printf(">> Tong chi tieu moi: " GREEN "%15.3f VND" RESET "\n", khGoc->totalSpent);
+            printf(">> Hang hien tai    : %s%s%s\n", getRankColor(khGoc->rank), khGoc->rank, RESET);
             if (strcmp(oldRank, khGoc->rank) != 0) {
                 printf("\n[*] CHUC MUNG! Quy khach da duoc nang hang tu %s len %s!\n", oldRank, khGoc->rank);
             }
@@ -109,7 +111,7 @@ void processCheckout(Bill* currentBill) {
         else {
             // Khách vãng lai: vẫn lưu lịch sử chung với giá trị cơ bản
             currentBill->customer.id = 0;
-            strcpy(currentBill->customer.rank, "Khach vang lai");
+            strcpy(currentBill->customer.rank, "Guest");
             currentBill->customer.totalSpent = finalPrice;
         }
 

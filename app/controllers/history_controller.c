@@ -5,6 +5,7 @@
 #include "../services/history_service.h"
 #include "../ui/history_ui.h"
 #include "../utils/validator.h"
+#include "../utils/helper.h"
 
 void handleViewHistory() {
     
@@ -13,7 +14,7 @@ void handleViewHistory() {
     
     while (1) {
         // Submenu lựa chọn
-        printf("\n=================== LUA CHON ====================\n");
+        printf("\n" CYAN "=================== LUA CHON ====================\n" RESET);
         printf("1. Xem lich su cua khach hang theo so dien thoai\n");
         printf("2. Tim hoa don theo ID bill\n");
         printf("0. Quay lai\n");

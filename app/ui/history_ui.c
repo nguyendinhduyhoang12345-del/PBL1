@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "../utils/helper.h"
 #include "../services/cart_service.h"
 
 // in toàn bộ lịch sử (tóm tắt)
@@ -12,10 +13,10 @@ void printAllHistory() {
         return;
     }
     
-    printf("\n============== TOAN BO LICH SU HOA DON ==============\n");
-    printf("%-8s | %-12s | %-12s | %-20s | %-10s | %-16s | %-10s | %-10s | %-6s\n",
+    printf("\n" CYAN "=================================================== TOAN BO LICH SU HOA DON ===================================================\n" RESET);
+    printf(CYAN "%-8s | %-12s | %-12s | %-20s | %-10s | %-16s | %-10s | %-10s | %-6s\n" RESET,
        "Bill ID", "Customer ID", "SDT", "Thoi gian", "Rank", "Tich luy", "So tien", "Giam gia", "Items");
-    printf("=========================================================================================================\n");
+    printf(CYAN "===============================================================================================================================\n" RESET);
     
     double totalAmount = 0;
     int count = 0;
@@ -37,8 +38,12 @@ void printAllHistory() {
                    &total, &discount, &finalPrice, &itemCount,
                    rank, &totalSpent);
 
-            printf("%-8d | %-12d | %-12s | %-20s | %-10s | %16.3f | %10.3f | %10.3f | %-6d\n",
-                   billId, customerId, phone, dateTime, rank, totalSpent, finalPrice, discount, itemCount);
+            printf("%s%-8d%s | %s%-12d%s | %-12s | %-20s | %s%-10s%s | " GREEN "%16.3f" RESET " | " GREEN "%10.3f" RESET " | " GREEN "%10.3f" RESET " | %-6d\n",
+                   YELLOW_BOLD, billId, RESET,
+                   YELLOW_BOLD, customerId, RESET,
+                   phone, dateTime,
+                   getRankColor(rank), rank, RESET,
+                   totalSpent, finalPrice, discount, itemCount);
             totalAmount += finalPrice;
             count++;
         }
@@ -46,9 +51,9 @@ void printAllHistory() {
     
     fclose(file);
     
-    printf("==============================================================\n");
-    printf("Tong so hoa don: %d | Tong doanh thu: %.3f VND\n", count, totalAmount);
-    printf("==============================================================\n");
+    printf(CYAN "===============================================================================================================================\n" RESET);
+    printf("Tong so hoa don: %d | Tong doanh thu: " GREEN "%.3f VND" RESET "\n", count, totalAmount);
+    printf(CYAN "===============================================================================================================================\n" RESET);
 }
 
 // In lịch sử hóa đơn chi tiết của 1 khách hàng (từ linked list)
@@ -59,15 +64,16 @@ void printCustomerHistory(HistoryNode* customerHistory) {
     }
 
     int customerId = customerHistory->customerId;
-    printf("\n=============== LICH SU HOA DON KHACH HANG ID: %d ===============\n", customerId);
+    printf("\n" CYAN "================================= LICH SU HOA DON KHACH HANG ID: " YELLOW_BOLD "%d" RESET CYAN " =================================\n" RESET,
+           customerId);
     
     double totalAmount = 0;
     int count = 0;
     HistoryNode* current = customerHistory;
     
-    printf("%-8s | %-12s | %-20s | %-8s | %-12s | %-10s | %-12s\n",
+    printf(CYAN "%-8s | %-12s | %-20s | %-8s | %-12s | %-10s | %-12s\n" RESET,
            "Bill ID", "Cust ID", "Ngay", "So mon", "Tong tien", "Giam gia", "Thanh toan");
-    printf("============================================================================================\n");
+    printf(CYAN "====================================================================================================\n" RESET);
 
     while (current != NULL) {
         int itemCount = 0;
@@ -77,9 +83,9 @@ void printCustomerHistory(HistoryNode* customerHistory) {
             node = node->next;
         }
 
-        printf("%-8d | %-12d | %-20s | %-8d | %12.0f | %10.0f | %12.0f\n",
-               current->bill.id,
-               current->customerId,
+        printf("%s%-8d%s | %s%-12d%s | %-20s | %-8d | " GREEN "%12.0f" RESET " | " GREEN "%10.0f" RESET " | " GREEN "%12.0f" RESET "\n",
+               YELLOW_BOLD, current->bill.id, RESET,
+               YELLOW_BOLD, current->customerId, RESET,
                current->bill.dateTime,
                itemCount,
                current->bill.total,
@@ -98,9 +104,9 @@ void printCustomerHistory(HistoryNode* customerHistory) {
 
     freeHistoryList(customerHistory); // Giải phóng bộ nhớ sau khi in xong
     
-    printf("\n========================================================\n");
-    printf("Tong so hoa don: %d | Tong doanh thu: %.3f VND\n", count, totalAmount);
-    printf("========================================================\n");
+    printf("\n" CYAN "====================================================================================================\n" RESET);
+    printf("Tong so hoa don: %d | Tong doanh thu: " GREEN "%.3f VND" RESET "\n", count, totalAmount);
+    printf(CYAN "====================================================================================================\n" RESET);
 }
 
 // In chi tiết hóa đơn theo ID bill
@@ -110,16 +116,17 @@ void printBillDetail(HistoryNode* billNode ) { // nhận vào node lịch sử �
         return;
     }
     
-    printf("\n=============== CHI TIET HOA DON ID: %d ===============\n", billNode->bill.id);
-    printf("Khach hang ID: %d\n", billNode->customerId);
+    printf("\n" CYAN "=================================== CHI TIET HOA DON ID: " YELLOW_BOLD "%d" RESET CYAN " ===================================\n" RESET,
+           billNode->bill.id);
+    printf("Khach hang ID: " YELLOW_BOLD "%d" RESET "\n", billNode->customerId);
     printf("Khach hang: %s | SDT: %s\n", billNode->bill.customer.name, billNode->bill.customer.phone);
-    printf("Rank: %s | Tong tich luy: %.3f VND\n",
-           billNode->bill.customer.rank,
+    printf("Rank: %s%s%s | Tong tich luy: " GREEN "%.3f VND" RESET "\n",
+           getRankColor(billNode->bill.customer.rank), billNode->bill.customer.rank, RESET,
            billNode->bill.customer.totalSpent);
     printf("Ngay: %s\n", billNode->bill.dateTime);
     
-    printf("%-4s | %-4s | %-25s | %-3s | %-8s | %-20s | %12s\n", "STT", "ID", "Ten mon", "SL", "Option", "Ghi chu", "Thanh tien");
-    printf("-----------------------------------------------------------------------------------------\n");
+    printf(CYAN "%-4s | %-4s | %-25s | %-3s | %-8s | %-20s | " GREEN "%12s" RESET "\n", "STT", "ID", "Ten mon", "SL", "Option", "Ghi chu", "Thanh tien");
+    printf(CYAN "====================================================================================================\n" RESET);
     
     CartNode *node = billNode->bill.cart.head;
     int i = 1;
@@ -129,7 +136,7 @@ void printBillDetail(HistoryNode* billNode ) { // nhận vào node lịch sử �
         else if (node->item.option == 2) strcpy(optLabel, "Suon cay");
         else strcpy(optLabel, "Khong");
 
-        printf("%-4d | %-4d | %-25.25s | %-3d | %-8s | %-20.20s | %12.3f\n",
+        printf("%-4d | %-4d | %-25.25s | %-3d | %-8s | %-20.20s | " GREEN "%12.3f" RESET "\n",
                i + 1,
                node->item.id,
                node->item.name,
@@ -141,8 +148,8 @@ void printBillDetail(HistoryNode* billNode ) { // nhận vào node lịch sử �
         i++;
     }
     
-    printf("-----------------------------------------------------------------------------------------\n");
-    printf("Tong tinh: %.3f VND | Giam gia: %.3f VND | Tong: %.3f VND\n",
+    printf(CYAN "====================================================================================================\n" RESET);
+    printf("Tong tinh: " GREEN "%.3f VND" RESET " | Giam gia: " GREEN "%.3f VND" RESET " | Tong: " GREEN "%.3f VND" RESET "\n",
            billNode->bill.total, billNode->bill.discount, billNode->bill.finalPrice);
 }
 

@@ -106,7 +106,6 @@ void loadCustomersFromFile(BTreeNode** root) {
         free(c);
     }
     fclose(f);
-    printf("\n[He thong] Da load %d khach hang tu file.\n", soLuongKH);
 }
 
 void saveAllCustomersToFile() {

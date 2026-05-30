@@ -2,6 +2,9 @@
 title Chay Do An PBL1
 color 0F
 
+:: Enable UTF-8 cho Windows Console
+chcp 65001 >nul
+
 echo ====================================================
 echo      DANG BIEN DICH CHUONG TRINH PBL1...
 echo ====================================================
