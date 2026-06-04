@@ -151,5 +151,7 @@ void printBillDetail(HistoryNode* billNode ) { // nhận vào node lịch sử �
     printf(CYAN "====================================================================================================\n" RESET);
     printf("Tong tinh: " GREEN "%.3f VND" RESET " | Giam gia: " GREEN "%.3f VND" RESET " | Tong: " GREEN "%.3f VND" RESET "\n",
            billNode->bill.total, billNode->bill.discount, billNode->bill.finalPrice);
+    printf(CYAN "====================================================================================================\n" RESET);
+    
 }
 
