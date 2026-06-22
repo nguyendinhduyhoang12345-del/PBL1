@@ -12,20 +12,20 @@ void printContentLine(const char *textColor, const char *text) {
 }
 
 void printWelcomeScreen() {
-    printFrameLine("  ╔══════════════════════════════════════════════════════════════════╗");
-    printFrameLine("  ║                                                                  ║");
-    printContentLine(YELLOW_BOLD, "              PBL1: ĐỒ ÁN LẬP TRÌNH TÍNH TOÁN                     ");
-    printFrameLine("  ╠══════════════════════════════════════════════════════════════════╣");
-    printContentLine(YELLOW_BOLD, "    TÊN ĐỀ TÀI: ĐẶT MÓN THÔNG MINH, TỐI ƯU THANH TOÁN,            ");
-    printContentLine(WHITE,       "                                                                  ");
-    printContentLine(WHITE,       "                                                                  ");
-    printFrameLine("  ╠══════════════════════════════════════════════════════════════════╣");
-    printContentLine(WHITE,       "                                                                  ");
-    printContentLine(WHITE,       "  Giáo viên hướng dẫn:                                            ");
-    printContentLine(WHITE,       "       PGS. TS. TRƯƠNG NGỌC CHÂU                                  ");
-    printContentLine(WHITE,       "  Sinh viên thực hiện:                                            ");
-    printContentLine(WHITE,       "       NGUYỄN ĐÌNH DUY HOÀNG    2HT_Nhật 1    MSSV: 102250222     ");
-    printContentLine(WHITE,       "       THÁI NGUYỄN ANH KIỆT     2HT_Nhật 1    MSSV: 102250233     ");
-    printContentLine(WHITE,       "                                                                  ");
-    printFrameLine("  ╚══════════════════════════════════════════════════════════════════╝");
+    printFrameLine("  ╔═════════════════════════════════════════════════════════════════╗");
+    printFrameLine("  ║                                                                 ║");
+    printContentLine(YELLOW_BOLD, "              PBL1: ĐỒ ÁN LẬP TRÌNH TÍNH TOÁN                    ");
+    printFrameLine("  ╠═════════════════════════════════════════════════════════════════╣");
+    printContentLine(WHITE,       "                                                                 ");
+    printContentLine(YELLOW_BOLD, "        TÊN ĐỀ TÀI: ĐẶT HÀNG VÀ THANH TOÁN MÓN ĂN                ");
+    printContentLine(WHITE,       "                                                                 ");
+    printFrameLine("  ╠═════════════════════════════════════════════════════════════════╣");
+    printContentLine(WHITE,       "                                                                 ");
+    printContentLine(WHITE,       "  Giáo viên hướng dẫn:                                           ");
+    printContentLine(WHITE,       "       TRƯƠNG NGỌC CHÂU                                          ");
+    printContentLine(WHITE,       "  Sinh viên thực hiện:                                           ");
+    printContentLine(WHITE,       "       NGUYỄN ĐÌNH DUY HOÀNG    2HT_Nhật 1    MSSV: 102250222    ");
+    printContentLine(WHITE,       "       THÁI NGUYỄN ANH KIỆT     2HT_Nhật 1    MSSV: 102250233    ");
+    printContentLine(WHITE,       "                                                                 ");
+    printFrameLine("  ╚═════════════════════════════════════════════════════════════════╝");
 }

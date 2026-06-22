@@ -23,7 +23,7 @@
 #include "app/services/cart_service.h"
 
 
-// ĐỊNH NGHĨA BIẾN TOÀN CỤC (Phải có ở main.c để link dữ liệu)
+// ĐỊNH NGHĨA BIẾN TOÀN CỤC
 MenuItem menu[TONG_SO_MON];
 Customer danhSachKH[1000];
 int soLuongKH = 0;
@@ -40,23 +40,23 @@ int main() {
     
     printWelcomeScreen();
     system("pause");
-    Bill currentBill = {0}; // Khởi tạo giỏ hàng rỗng
-    cartInit(&currentBill.cart); // Khởi tạo giỏ hàng trong hóa đơn
+    Bill currentBill = {0};
+    cartInit(&currentBill.cart);
     int choice;
 
     while(1) {
-        system("cls"); // Hoặc "clear" trên Mac/Linux
-        printf(CYAN "====================================================" RESET "\n");
-        printf(CYAN "          " RESET WHITE "HE THONG QUAN LY QUAN COM TAM PBL1" RESET CYAN "\n");
-        printf(CYAN "====================================================" RESET "\n");
-        printf(WHITE "  1. Dat mon" RESET "\n");
-        printf(WHITE "  2. Xem va chinh sua gio hang" RESET "\n");
-        printf(WHITE "  3. Nhap thong tin KH" RESET "\n");
-        printf(WHITE "  4. Thanh toan" RESET "\n");
-        printf(WHITE "  5. Xem lich su" RESET "\n");
-        printf(WHITE "  6. Thong ke doanh thu va xuat file bao cao" RESET "\n");
-        printf(WHITE "  0. Thoat" RESET "\n");
-        printf(CYAN "====================================================" RESET "\n");
+        system("cls");
+        printf(CYAN "  ╔════════════════════════════════════════════════════╗" RESET "\n");
+        printf(CYAN "  ║" RESET " %s%-50s" RESET " " CYAN "║" RESET "\n", YELLOW_BOLD, "HE THONG QUAN LY QUAN COM TAM");
+        printf(CYAN "  ╠════════════════════════════════════════════════════╣" RESET "\n");
+        printf(CYAN "  ║" RESET WHITE " 1. Dat mon" RESET CYAN "%41s║" RESET "\n", "");
+        printf(CYAN "  ║" RESET WHITE " 2. Xem va chinh sua gio hang" RESET CYAN "%23s║" RESET "\n", "");
+        printf(CYAN "  ║" RESET WHITE " 3. Nhap thong tin KH" RESET CYAN "%31s║" RESET "\n", "");
+        printf(CYAN "  ║" RESET WHITE " 4. Thanh toan" RESET CYAN "%38s║" RESET "\n", "");
+        printf(CYAN "  ║" RESET WHITE " 5. Xem lich su" RESET CYAN "%37s║" RESET "\n", "");
+        printf(CYAN "  ║" RESET WHITE " 6. Thong ke doanh thu va xuat file bao cao" RESET CYAN "%9s║" RESET "\n", "");
+        printf(CYAN "  ║" RESET WHITE " 0. Thoat" RESET CYAN "%43s║" RESET "\n", "");
+        printf(CYAN "  ╚════════════════════════════════════════════════════╝" RESET "\n");
         
         choice = getValidInt("-> Chon chuc nang: ");
         if (choice < 0 || choice > 6) {

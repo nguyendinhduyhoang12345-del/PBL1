@@ -38,7 +38,7 @@ void showMenuUI() {
     printf("\n");
     printCyanLine();
     // In tiêu đề nửa trên
-    printf(CYAN "| " RESET WHITE "%-42s" RESET CYAN " | " RESET "%-87s" CYAN " |" RESET "\n", "[ COM / MON CHINH ]", "");
+    printf(CYAN "| " RESET YELLOW_BOLD "%-42s" RESET CYAN " | " RESET "%-87s" CYAN " |" RESET "\n", "[ COM / MON CHINH ]", "");
     printCyanLine();
 
     // NỬA TRÊN: Cơm (Trái) - Combo & Khẩu hiệu (Phải)
@@ -65,10 +65,9 @@ void showMenuUI() {
     printCyanLine();
     
     // NỬA DƯỚI: Canh - Món thêm - Giải khát
-    printf(CYAN "| " RESET WHITE "%-42s" RESET CYAN " | " RESET WHITE "%-42s" RESET CYAN " | " RESET WHITE "%-42s" RESET CYAN " |" RESET "\n", "[ CANH ]", "[ MON THEM ]", "[ GIAI KHAT ]");
+    printf(CYAN "| " RESET YELLOW_BOLD "%-42s" RESET CYAN " | " RESET YELLOW_BOLD "%-42s" RESET CYAN " | " RESET YELLOW_BOLD "%-42s" RESET CYAN " |" RESET "\n", "[ CANH ]", "[ MON THEM ]", "[ GIAI KHAT ]");
     printCyanLine();
 
-    // Lặp 8 lần vì Mảng "Món thêm" có tới 8 món (dài nhất ở nửa dưới)
     for (int i = 0; i < 8; i++) { 
         printf(CYAN "| " RESET);
         if (i < 2) {
