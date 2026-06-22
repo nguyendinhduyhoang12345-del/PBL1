@@ -33,7 +33,7 @@ void showCartUI(Bill *currentBill) {
     }
 
     double tamTinh = 0;
-    printf(CYAN "%-3s" RESET " | " WHITE "%-*s" RESET " | " WHITE "%*s" RESET " | " WHITE "%*s" RESET " | " WHITE "%*s" RESET "\n",
+    printf(WHITE "%-3s" RESET " | " WHITE "%-*s" RESET " | " WHITE "%*s" RESET " | " WHITE "%*s" RESET " | " WHITE "%*s" RESET "\n",
            "STT", CART_NAME_WIDTH, "Ten mon", CART_QTY_WIDTH, "SL", CART_PRICE_WIDTH, "Don gia", CART_TOTAL_WIDTH, "Thanh tien");
     printCyanLine();
 
@@ -41,7 +41,7 @@ void showCartUI(Bill *currentBill) {
     int i = 1;
     while (node) {
         OrderItem item = node->item;
-        printf(CYAN "%-3d" RESET " | " WHITE "%-*.*s" RESET " | " WHITE "%*d" RESET " | " GREEN "%*.*f" RESET " | " GREEN "%*.*f" RESET "\n",
+        printf(WHITE "%-3d" RESET " | " WHITE "%-*.*s" RESET " | " WHITE "%*d" RESET " | " GREEN "%*.*f" RESET " | " GREEN "%*.*f" RESET "\n",
                i,
                CART_NAME_WIDTH, CART_NAME_WIDTH, item.name,
                CART_QTY_WIDTH, item.quantity,

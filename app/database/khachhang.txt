@@ -2,11 +2,12 @@
 2|0902345678|Tran Thi Loan|456 Hung Vuong, Hue|200000.000|Bronze
 3|0903456789|Huynh Van Tam|789 Phan Chu Trinh, HCM|178000.000|Bronze
 4|0904567890|Le Quang Minh|101 Tran Phu, Ha Noi|143000.000|Bronze
-5|0905678901|Thai Nguyen Anh Kiet|202 Nguyen Hue, Da Nang|1408800.000|Silver
-6|0906789012|Le Hoang Truong|303 Ly Thai To, Da Nang|150000.000|Bronze
+5|0905678901|Le Ba Son|202 Nguyen Hue, Da Nang|1408800.000|Silver
+6|0906789012|Le Hoang Truong|303 Ly Thai To, Da Nang|339000.000|Bronze
 7|0907890123|Nguyen Quang Chien|404 Vo Nguyen Giap, Da Nang|348000.000|Bronze
 8|0908901234|Ho Le Quoc Toan|505 Dong Da, Hue|88000.000|Bronze
 9|0909012345|Le Ngoc Nam|606 Quang Trung, HCM|318000.000|Bronze
-10|0900123456|Pham Le Gia Huy|707 Bach Dang, Da Nang|0.000|Bronze
+10|0900123456|Pham Le Gia Huy|707 Bach Dang, Da Nang|221000.000|Bronze
 11|0904207257|Nguyen Duy Hoang|21 Ngu Hanh Son|453000.000|Bronze
 12|0900234567|Phan Ta Nhan|01 Au Co|455000.000|Bronze
+13|0904723515|Thai Nguyen Anh Kiet|07 Le Loi|624000.000|Silver

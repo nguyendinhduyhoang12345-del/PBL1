@@ -15,7 +15,7 @@
 #include "../utils/validator.h"
 
 void processCheckout(Bill* currentBill) {
-    printf("\n==================== THANH TOAN ====================\n");
+    printf("\n" CYAN"==================== THANH TOAN ===================="RESET" \n");
     
     if (currentBill->cart.itemCount == 0) {
         printf("\n[!] Gio hang cua ban dang trong! Vui long chon mon truoc khi thanh toan.\n");
@@ -23,12 +23,10 @@ void processCheckout(Bill* currentBill) {
         return; 
     }
 
-    // --- BƯỚC 1: GỌI SERVICE TÍNH TIỀN ---
     double subtotal = calculateSubtotal(currentBill);
     double discountRate = 0;
     Customer* khGoc = NULL;
 
-    // Tìm khách hàng gốc trên B-Tree
     if (strlen(currentBill->customer.phone) > 0) {
         khGoc = searchBTree(btreeRoot, currentBill->customer.phone);
         if (khGoc != NULL) {
@@ -39,30 +37,25 @@ void processCheckout(Bill* currentBill) {
     double discountAmount = subtotal * discountRate;
     double finalPrice = subtotal - discountAmount;
 
-    // sau khi tinh xong, cập nhật lại tổng tiền vào hóa đơn để lưu trữ
     currentBill->total = subtotal; 
     currentBill->discount = discountAmount;
     currentBill->finalPrice = finalPrice;
     getCurrentDateTime(currentBill->dateTime, sizeof(currentBill->dateTime));
-    currentBill->id = rand() % 900000 + 100000; // Gán ID ngẫu nhiên cho hóa đơn (100000-999999)
+    currentBill->id = rand() % 900000 + 100000;
 
-
-
-    // --- BƯỚC 2: TƯƠNG TÁC NHẬP LIỆU VỚI THU NGÂN ---
     printf(">> TONG TIEN BAN DAU   : " GREEN "%15.3f VND" RESET "\n", subtotal);
     
     if (khGoc != NULL) {
-        printf(">> RANK KHACH HANG     : %s%-10s%s (Giam %.0f%%)\n", getRankColor(khGoc->rank), khGoc->rank, RESET, discountRate * 100);
-        printf(">> SO TIEN DUOC GIAM   : -" GREEN "%14.3f VND" RESET "\n", discountAmount);
+        printf(">> RANK KHACH HANG     : %s%-5s%s (Giam %.0f%%)\n", getRankColor(khGoc->rank), khGoc->rank, RESET, discountRate * 100);
+        printf(">> SO TIEN DUOC GIAM   : " GREEN "%14.3f VND" RESET "\n", discountAmount);
     } else {
         printf(">> RANK KHACH HANG     : " YELLOW_BOLD "Guest" RESET " (Khong giam gia)\n");
     }
     
-    printf("----------------------------------------------------\n");
+    printf(""CYAN"----------------------------------------------------"RESET"\n");
     printf(">> TONG TIEN CAN TRA   : " GREEN "%15.3f VND" RESET "\n", finalPrice);
-    printf("----------------------------------------------------\n");
+    printf(""CYAN"----------------------------------------------------"RESET"\n");
 
-    // Tương tác với thu ngân
     double customerMoney = 0;
     customerMoney = getValidDouble("-> Nhap so tien khach dua : ");
 
@@ -71,10 +64,8 @@ void processCheckout(Bill* currentBill) {
         customerMoney = getValidDouble("-> Nhap so tien khach dua : ");
     }
 
-    // --- BƯỚC 3: GỌI UI VẼ HÓA ĐƠN ---
     printBillUI(currentBill, customerMoney, customerMoney - finalPrice);
 
-    // --- BƯỚC 4: XÁC NHẬN VÀ LƯU DATABASE ---
     int xacNhan;
     xacNhan = getValidInt("Xac nhan thanh toan (1: Dong y / 0: Huy bo): ");
     if (xacNhan == 1) {
@@ -86,7 +77,7 @@ void processCheckout(Bill* currentBill) {
 
             // 2. Cập nhật dữ liệu khách hàng
             khGoc->totalSpent += finalPrice;
-            updateCustomerRank(khGoc); // Cập nhật hạng dựa trên mốc 1tr - 5tr - 10tr
+            updateCustomerRank(khGoc);
 
             // 3. Gán dữ liệu customer vào bill để lưu lịch sử đầy đủ
             currentBill->customer.id = khGoc->id;
@@ -99,17 +90,16 @@ void processCheckout(Bill* currentBill) {
             saveAllCustomersToFile(); 
 
             // 5. Hiển thị thông tin cập nhật
-            printf("\n------------------------------------------------------------\n");
-            printf("[ CAP NHAT KHACH HANG ]\n");
+            printf("\n"CYAN"------------------------------------------------------------"RESET"\n");
+            printf(""CYAN"[ CAP NHAT KHACH HANG ]"RESET"\n");
             printf(">> Tong chi tieu cu : " GREEN "%15.3f VND" RESET "\n", oldTotal);
             printf(">> Tong chi tieu moi: " GREEN "%15.3f VND" RESET "\n", khGoc->totalSpent);
-            printf(">> Hang hien tai    : %s%s%s\n", getRankColor(khGoc->rank), khGoc->rank, RESET);
+            printf(">> Hang hien tai    : %s%15s%s\n", getRankColor(khGoc->rank), khGoc->rank, RESET);
             if (strcmp(oldRank, khGoc->rank) != 0) {
-                printf("\n[*] CHUC MUNG! Quy khach da duoc nang hang tu %s len %s!\n", oldRank, khGoc->rank);
+                printf("\n"CYAN"[*] CHUC MUNG! Quy khach da duoc nang hang tu %s len %s!"RESET"\n", oldRank, khGoc->rank);
             }
         } 
         else {
-            // Khách vãng lai: vẫn lưu lịch sử chung với giá trị cơ bản
             currentBill->customer.id = 0;
             strcpy(currentBill->customer.rank, "Guest");
             currentBill->customer.totalSpent = finalPrice;
@@ -124,7 +114,7 @@ void processCheckout(Bill* currentBill) {
             saveBillToHistoryFile(currentBill->customer.id, currentBill);
         }
 
-        printf("\n[OK] Thanh toan thanh cong! Cam on quy khach.\n");
+        printf("\n"GREEN"[OK] Thanh toan thanh cong! Cam on quy khach."RESET"\n");
         
         // Dọn dẹp giỏ hàng để phục vụ người tiếp theo
         currentBill->cart.head = NULL;
@@ -133,7 +123,7 @@ void processCheckout(Bill* currentBill) {
         memset(currentBill->customer.phone, 0, sizeof(currentBill->customer.phone)); 
         memset(currentBill->customer.name, 0, sizeof(currentBill->customer.name));
     } else {
-        printf("\n[!] Da huy thanh toan.\n");
+        printf("\n"RED"[!] Da huy thanh toan."RESET"\n");
     }
     
 }

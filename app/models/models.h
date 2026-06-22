@@ -15,7 +15,6 @@ typedef struct {
     int id;
     char name[50];
     double price;
-    int stock;
     int hasOptions;
 } MenuItem;
 
@@ -62,15 +61,14 @@ typedef struct {
 
 typedef struct {
     int customerId;
-    int billCount;       // Số hóa đơn của khách
-    double revenue;      // Tổng doanh thu của khách
+    int billCount;       
+    double revenue;
 } CustomerRevenue;
 
-// CTDL động
-// danh sách liên kết quản lý lịch sử hóa đơn
+
 typedef struct HistoryNode {
-    int customerId;        // ID khách hàng (để dễ tra cứu lịch sử từng khách)
-    Bill bill;             // Toàn bộ thông tin hóa đơn (items, dateTime, total, ...)
+    int customerId;
+    Bill bill;
     struct HistoryNode* next;
 } HistoryNode;
 

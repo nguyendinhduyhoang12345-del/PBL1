@@ -40,17 +40,6 @@ void loadMenuFromFile(const char* filename) {
         token = strtok(NULL, "|");
         if (token != NULL) menu[i].hasOptions = atoi(token);
         
-        // Tự động tạo tồn kho linh hoạt theo khung giờ (dựa trên code cũ của bạn)
-        if (i >= 20) {
-            menu[i].stock = 500 + rand() % 501; // Giải khát
-        } else {
-            if (gioHienTai >= 6 && gioHienTai < 11) menu[i].stock = 400 + rand() % 101;
-            else if (gioHienTai >= 11 && gioHienTai < 14) menu[i].stock = 300 + rand() % 101;
-            else if (gioHienTai >= 14 && gioHienTai < 17) menu[i].stock = 270 + rand() % 31;
-            else if (gioHienTai >= 17 && gioHienTai < 21) menu[i].stock = 50 + rand() % 221;
-            else menu[i].stock = rand() % 51;
-        }
-        
         hashTableInsert(menuHashTable, menu[i].id, menu[i]); // Thêm món vào hash table
         i++;
         if (i >= TONG_SO_MON) break; // Chốt chặn chỉ nạp tối đa 25 món
@@ -73,12 +62,11 @@ void loadCustomersFromFile(BTreeNode** root) {
         Customer* c = (Customer*)malloc(sizeof(Customer));
 
         char *token = strtok(line, "|");
-        if (token) c->id = atoi(token); // Token 1: ID
+        if (token) c->id = atoi(token);
 
         token = strtok(NULL, "|");
         if (token) {
             strcpy(c->phone, token);
-            // Trim khoảng trắng ở đầu và cuối số điện thoại
             int len = strlen(c->phone);
             while (len > 0 && (c->phone[len-1] == ' ' || c->phone[len-1] == '\t')) {
                 c->phone[--len] = 0;
@@ -86,19 +74,19 @@ void loadCustomersFromFile(BTreeNode** root) {
             int i = 0;
             while (c->phone[i] == ' ' || c->phone[i] == '\t') i++;
             if (i > 0) memmove(c->phone, c->phone + i, strlen(c->phone + i) + 1);
-        } // Token 2: SĐT
+        }
 
         token = strtok(NULL, "|");
-        if (token) strcpy(c->name, token); // Token 3: Tên
+        if (token) strcpy(c->name, token);
 
         token = strtok(NULL, "|");
-        if (token) strcpy(c->address, token); // Token 4: Địa chỉ
+        if (token) strcpy(c->address, token);
 
         token = strtok(NULL, "|");
-        if (token) c->totalSpent = atof(token); // Token 5: Tiền
+        if (token) c->totalSpent = atof(token);
 
         token = strtok(NULL, "|");
-        if (token) strcpy(c->rank, token); // Token 6: Rank
+        if (token) strcpy(c->rank, token);
 
         danhSachKH[soLuongKH] = *c;
         insertBTree(root, &danhSachKH[soLuongKH]);
@@ -110,12 +98,11 @@ void loadCustomersFromFile(BTreeNode** root) {
 
 void saveAllCustomersToFile() {
     FILE *f = fopen("app/database/khachhang.txt", "w");
-    if (f == NULL) {  // ✓ Kiểm tra lỗi
+    if (f == NULL) {
         printf("[!] Loi: Khong the mo file khachhang.txt de ghi\n");
         return;
     }
     for (int i = 0; i < soLuongKH; i++) {
-        // Thêm %d| ở đầu dòng
         fprintf(f, "%d|%s|%s|%s|%.3f|%s\n", 
                 danhSachKH[i].id,
                 danhSachKH[i].phone, 

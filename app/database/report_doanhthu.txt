@@ -1,14 +1,14 @@
 ====================================================
          BAO CAO DOANH THU QUAN COM TAM
 ====================================================
-Ngay tao: 15/05/2026 18:29:49
+Ngay tao: 22/06/2026 19:32:52
 ====================================================
 
 TONG QUAN:
-  Tong so hoa don: 12
-  Tong doanh thu: 2924800.000 VND
-  Tong so mon da ban: 30
-  Doanh thu trung binh/bill: 243733.333 VND
+  Tong so hoa don: 26
+  Tong doanh thu: 5236800.000 VND
+  Tong so mon da ban: 61
+  Doanh thu trung binh/bill: 201415.385 VND
 
 PHAN TICH THEO KHACH HANG:
 Khach ID     | So HD        | Doanh thu      
@@ -19,6 +19,13 @@ Khach ID     | So HD        | Doanh thu
 3            | 1            |      178000.000
 4            | 1            |      143000.000
 5            | 5            |     1408800.000
-6            | 1            |      150000.000
+6            | 3            |      339000.000
+12           | 1            |      455000.000
+7            | 1            |      348000.000
+8            | 1            |       88000.000
+9            | 1            |      318000.000
+10           | 2            |      221000.000
+13           | 5            |      624000.000
+0            | 1            |       69000.000
 
 ====================================================

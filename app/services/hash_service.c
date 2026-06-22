@@ -1,14 +1,14 @@
 #include <stdlib.h>
 #include "hash_service.h"
 
-static int hash(int key, int size) { //static là để hàm này chỉ có thể được sử dụng trong file này, không bị xung đột tên với các file khác
+static int hash(int key, int size) {
     return key % size;
 }
 
 HashTable *createHashTable() {
     HashTable *ht = (HashTable *)malloc(sizeof(HashTable));
     if (!ht) return NULL;
-    ht->size = HASH_TABLE_SIZE; // Kích thước bảng băm
+    ht->size = HASH_TABLE_SIZE;
     ht->table = (HashNode **)calloc(ht->size, sizeof(HashNode*));
     if (!ht->table) {
         free(ht);

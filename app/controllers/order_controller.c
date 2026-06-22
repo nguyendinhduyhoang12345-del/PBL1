@@ -2,6 +2,7 @@
 #include <string.h>
 #include "../models/models.h"
 #include "../utils/validator.h"
+#include "../utils/helper.h"
 #include "../ui/menu_ui.h"
 #include "../ui/cart_ui.h"
 #include "order_controller.h"
@@ -38,9 +39,8 @@ void removeFromCart(Bill *currentBill) {
         return;
     }
     MenuItem *menuItem = hashTableSearch(menuHashTable, node->item.id);
-    if (menuItem) menuItem->stock += node->item.quantity; // Hoàn lại tồn kho
     cartRemoveItemByIndex(&currentBill->cart, idx);
-    printf("  => Da xoa mon va hoan lai ton kho!\n");
+    printf("  => Da xoa mon!\n");
 }
 
 void updateQuantity(Bill *currentBill) {
@@ -87,15 +87,7 @@ void updateQuantity(Bill *currentBill) {
         }
     }
 
-    // Kiểm tra tồn kho
-    int diff = newQty - oldQty;
-    if (diff > 0 && diff > menuItem->stock) {
-        printf("  !! Loi: Kho khong du hang (Con: %d).\n", menuItem->stock);
-        return;
-    }
-
     // Cập nhật
-    if (menuItem) menuItem->stock -= diff; // Cập nhật tồn kho
     cartUpdateQuantityByIndex(&currentBill->cart, idx, newQty);
     printf("  => Da cap nhat so luong!\n");
 }
@@ -103,7 +95,7 @@ void updateQuantity(Bill *currentBill) {
 
 //Dành cho case 1
 void handleOrderMenu(Bill* currentBill) {
-    showMenuUI(); // Hiển thị menu món ăn
+    showMenuUI();
     while (1) {
         int countMain = 0;
         CartNode *tmp = currentBill->cart.head;
@@ -112,8 +104,8 @@ void handleOrderMenu(Bill* currentBill) {
             tmp = tmp->next;
         }
 
-        printf("\n--- DAT MON ---");
-        printf("\n>>(Mon chinh: %d/5 | Mon them & Nuoc: Khong gioi han, Nhap 0 de thoat) : ", countMain);
+        printf("\n"CYAN"========== DAT MON ========="RESET"\n");
+        printf("\n>>(Mon chinh: "GREEN"%d/5"RESET" | Mon them & Nuoc: Khong gioi han, Nhap 0 de thoat) : ", countMain);
         int idNhap = getValidInt("\n>> Nhap Ma Mon: ");
         if (idNhap == 0) break;
 
@@ -133,8 +125,8 @@ void handleOrderMenu(Bill* currentBill) {
         }
          
         int slNhap = getValidInt(">> Nhap so luong: ");
-        if (slNhap <= 0 || slNhap > menuItem->stock || slNhap > 5) {
-            printf("  !! Loi: Kho ko du hoac SL ko hop le (Con: %d)\n", menuItem->stock);
+        if (slNhap <= 0 || slNhap > 5) {
+            printf("  !! Loi: So luong khong hop le (Toi da 5).\n");
             continue;
         }
         if (idNhap <= 12 && countMain + slNhap > 5) {
@@ -173,7 +165,7 @@ void handleOrderMenu(Bill* currentBill) {
         strcpy(newItem.note, ghiChu);
         newItem.totalPrice = giaThucTe * slNhap;
 
-        printf("  => Da them %d '%s'", slNhap, menuItem->name);
+        printf("  => Da them "YELLOW_BOLD"%d '%s'"RESET"", slNhap, menuItem->name);
 
         if (menuItem->hasOptions) {
             if (opt == 1) printf(" (Cot let)");
@@ -182,7 +174,6 @@ void handleOrderMenu(Bill* currentBill) {
 
         printf(" vao gio!\n");
         addToCart(currentBill, newItem);
-        menuItem->stock -= slNhap;
     }
     
 }
@@ -190,10 +181,9 @@ void handleOrderMenu(Bill* currentBill) {
 // Dành cho case 2
 void handleCartMenu(Bill* currentBill) {
     while (1) {
-        
         showCartUI(currentBill); // Hiển thị trạng thái giỏ hàng hiện tại
         
-        printf("\n[ THAO TAC GIO HANG ]\n");
+        printf("\n"CYAN"[ THAO TAC GIO HANG ]"RESET"\n");
         printf("1. Xoa mon khoi gio\n");
         printf("2. Thay doi so luong\n");
         printf("0. Quay lai Menu chinh\n");
@@ -210,7 +200,7 @@ void handleCartMenu(Bill* currentBill) {
             break; // Thoát vòng lặp để về main
         }
         else {
-            printf("[!] Lua chon khong hop le.\n");
+            printf("\n"RED"[!] Lua chon khong hop le."RESET"\n");
         }
     }
 }
