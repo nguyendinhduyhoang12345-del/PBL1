@@ -20,6 +20,5 @@ void printLine() {
 void getCurrentDateTime(char* buffer, int maxSize) {
     time_t t = time(NULL);
     struct tm tm = *localtime(&t);
-    // Định dạng: Ngày/Tháng/Năm Giờ:Phút:Giây
     strftime(buffer, maxSize, "%d/%m/%Y %H:%M:%S", &tm);
 }

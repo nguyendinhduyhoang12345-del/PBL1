@@ -15,6 +15,7 @@
 #include "app/controllers/customer_controller.h"
 #include "app/controllers/checkout_controller.h"
 #include "app/controllers/history_controller.h"
+#include "app/controllers/report_controller.h"
 
 #include "app/services/file_service.h"
 #include "app/services/history_service.h"

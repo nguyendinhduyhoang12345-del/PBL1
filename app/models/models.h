@@ -33,8 +33,8 @@ typedef struct {
     char phone[15];
     char name[50];
     char address[100];
-    double totalSpent; // Tổng tiền đã chi tiêu ở quán
-    char rank[20];     // Hạng thành viên (Mới, Bạc, Vàng, VIP)
+    double totalSpent;
+    char rank[20];
 } Customer;
 
 typedef struct CartNode {

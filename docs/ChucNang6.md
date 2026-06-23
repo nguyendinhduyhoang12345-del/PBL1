@@ -1,496 +1,576 @@
-# Chức năng 6: Báo cáo Doanh thu và Thống kê
+# CHỨC NĂNG 6: THỐNG KÊ DOANH THU & XUẤT FILE BÁO CÁO
 
-## 1. Tổng quan Chức năng
+## I. TỔNG QUÁT
 
-Chức năng 6 cho phép người dùng xem báo cáo tổng hợp doanh thu của quán cơm Tấm, bao gồm:
-- **Tổng quan**: Tổng số hóa đơn, tổng doanh thu, tổng số món đã bán, doanh thu trung bình/bill
-- **Phân tích theo khách hàng**: Doanh thu và số lượng hóa đơn của từng khách
-- **Xuất báo cáo**: Lưu báo cáo ra file văn bản có định dạng đẹp
+**Tên chức năng:** Thống Kê Doanh Thu & Xuất File Báo Cáo  
+**Lựa chọn:** Case 6 trong menu chính  
+**Mô tả:** Thống kê doanh thu tổng quát, số hóa đơn, số món đã bán, phân tích theo từng khách hàng, và xuất file báo cáo chi tiết.
 
-Chức năng đọc dữ liệu từ file `app/database/history.txt` (format BILL mới với chi tiết items).
+---
 
-## 2. Kiến trúc Tổng quan
-
-Chức năng được tổ chức theo kiến trúc MVC rõ ràng:
+## II. CÁC CHỈ SỐ THỐNG KÊ
 
 ```
-app/
-├── models/models.h          # Struct CustomerRevenue
-├── services/
-│   ├── report_service.h     # Khai báo hàm service
-│   └── report_service.c     # Logic tính toán báo cáo
-├── ui/
-│   ├── report_ui.h          # Khai báo hàm UI
-│   └── report_ui.c          # Hiển thị và xuất báo cáo
-└── main.c                   # Menu chính + case 6
+1. Tổng Doanh Thu
+   = Σ(finalPrice) của tất cả bill
+
+2. Tổng Số Hóa Đơn
+   = Số lượng dòng "BILL|" trong file
+
+3. Tổng Số Món Đã Bán
+   = Σ(itemCount) của tất cả bill
+
+4. Phân Tích Theo Khách
+   = CustomerID | Số Hóa Đơn | Tổng Doanh Thu
 ```
 
-**Nguyên tắc thiết kế:**
-- **Models**: Chứa struct dữ liệu
-- **Services**: Xử lý logic nghiệp vụ (tính toán)
-- **UI**: Xử lý giao diện (hiển thị, xuất file)
-- **Main**: Điều phối và gọi hàm
+---
 
-## 3. Chi tiết Từng File
+## III. CẤU TRÚC DỮ LIỆU CHÍNH
 
-### 3.1 `app/models/models.h` - Cấu trúc Dữ liệu
-
-Thêm struct sau vào cuối file:
-
+### CustomerRevenue (Thống kê khách hàng)
 ```c
-// Struct cho báo cáo doanh thu theo khách hàng
 typedef struct {
-    int customerId;        // ID khách hàng
-    int billCount;         // Số lượng hóa đơn của khách
-    double revenue;        // Tổng doanh thu của khách
+    int customerId;      // ID khách hàng
+    int billCount;       // Số hóa đơn của khách
+    double revenue;      // Tổng doanh thu từ khách
 } CustomerRevenue;
 ```
 
-**Giải thích:**
-- `customerId`: Liên kết với ID trong file khách hàng
-- `billCount`: Đếm số hóa đơn để tính tần suất mua
-- `revenue`: Tổng tiền khách đã chi tiêu
+---
 
-### 3.2 `app/services/report_service.h` - Header Service
+## IV. HÀM CHÍNH
 
-Tạo file mới với nội dung:
+### `handleGenerateReport()` - Controller
 
-```c
-#ifndef REPORT_SERVICE_H
-#define REPORT_SERVICE_H
+**Vị trí:** `app/services/report_service.c`  
+**Mô tả:** Xử lý toàn bộ quá trình tạo báo cáo
 
-#include "../models/models.h"
-
-// ============ HÀM CHÍNH ============
-
-// Hàm chính xử lý báo cáo doanh thu
-void handleGenerateReport();
-
-// ============ HÀM TÍNH TOÁN ============
-
-// Tính tổng doanh thu từ tất cả hóa đơn
-double calculateTotalRevenue();
-
-// Tính tổng số hóa đơn
-int calculateTotalBills();
-
-// Tính tổng số món đã bán
-int calculateTotalItems();
-
-// Phân tích doanh thu theo từng khách hàng
-void analyzeByCustomer(CustomerRevenue* customerStats, int* customerCount);
-
-#endif
+**Luồng:**
+```
+1. Tính các chỉ số chính
+2. Phân tích theo khách hàng
+3. Hiển thị báo cáo
+4. Xuất file báo cáo
 ```
 
-**Giải thích:**
-- Header guard để tránh include trùng lặp
-- Tách biệt hàm chính và hàm helper
-- Sử dụng struct từ models.h
+---
 
-### 3.3 `app/services/report_service.c` - Logic Service
+## V. HÀM PHỤ TRỢ
 
-Tạo file mới với nội dung:
+### 1. `calculateTotalRevenue()` - Service
 
+**Vị trị:** `app/services/report_service.c`  
+**Mô tả:** Tính tổng doanh thu từ tất cả hóa đơn
+
+**Pseudocode:**
 ```c
-#include "report_service.h"
-#include "../ui/report_ui.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#define MAX_CUSTOMERS 100  // Giới hạn số khách hàng tối đa
-
-// ============ HÀM HELPER NỘI BỘ ============
-
-// Tìm hoặc tạo entry mới cho khách hàng trong mảng thống kê
-CustomerRevenue* findOrCreateCustomer(CustomerRevenue* customerStats, int* customerCount, int customerId) {
-    // Duyệt mảng để tìm khách đã tồn tại
-    for (int i = 0; i < *customerCount; i++) {
-        if (customerStats[i].customerId == customerId) {
-            return &customerStats[i];
-        }
-    }
-
-    // Tạo entry mới nếu chưa có
-    if (*customerCount < MAX_CUSTOMERS) {
-        customerStats[*customerCount].customerId = customerId;
-        customerStats[*customerCount].billCount = 0;
-        customerStats[*customerCount].revenue = 0.0;
-        return &customerStats[(*customerCount)++];
-    }
-
-    return NULL;  // Quá giới hạn
-}
-
-// ============ HÀM TÍNH TOÁN ============
-
-// Tính tổng doanh thu từ file history.txt
 double calculateTotalRevenue() {
     FILE* file = fopen("app/database/history.txt", "r");
     if (file == NULL) {
         printf("[!] Khong the mo file history.txt\n");
         return 0.0;
     }
-
+    
     double totalRevenue = 0.0;
     char line[500];
-
-    // Đọc từng dòng trong file
+    
     while (fgets(line, sizeof(line), file)) {
         // Loại bỏ ký tự xuống dòng
         int len = strlen(line);
         while (len > 0 && (line[len - 1] == '\n' || line[len - 1] == '\r')) {
             line[--len] = '\0';
         }
-
+        
         // Chỉ xử lý dòng BILL
         if (strncmp(line, "BILL|", 5) == 0) {
             int billId, customerId, itemCount;
             char nameKhach[50], phone[15], dateTime[50];
             double total, discount, finalPrice;
-
+            
             // Parse thông tin từ dòng BILL
-            sscanf(line, "BILL|%d|%d|%[^|]|%[^|]|%[^|]|%lf|%lf|%lf|%d",
+            // Format: BILL|ID|CustomerID|Name|Phone|DateTime|Total|Discount|FinalPrice|ItemCount
+            sscanf(line, "BILL|%d|%d|%49[^|]|%14[^|]|%49[^|]|%lf|%lf|%lf|%d",
                    &billId, &customerId, nameKhach, phone, dateTime,
                    &total, &discount, &finalPrice, &itemCount);
-
-            // Cộng dồn doanh thu
-            totalRevenue += finalPrice;
+            
+            totalRevenue += finalPrice;  // Cộng tiền cuối cùng
         }
     }
-
+    
     fclose(file);
     return totalRevenue;
 }
+```
 
-// Đếm tổng số hóa đơn
+**Độ phức tạp:** O(n) - n là số dòng file
+
+### 2. `calculateTotalBills()` - Service
+
+**Vị trị:** `app/services/report_service.c`  
+**Mô tả:** Tính tổng số hóa đơn
+
+**Pseudocode:**
+```c
 int calculateTotalBills() {
     FILE* file = fopen("app/database/history.txt", "r");
     if (file == NULL) {
         return 0;
     }
-
+    
     int billCount = 0;
     char line[500];
-
+    
     while (fgets(line, sizeof(line), file)) {
+        // Đếm số dòng bắt đầu bằng "BILL|"
         if (strncmp(line, "BILL|", 5) == 0) {
             billCount++;
         }
     }
-
+    
     fclose(file);
     return billCount;
 }
+```
 
-// Tính tổng số món đã bán
+**Độ phức tạp:** O(n)
+
+### 3. `calculateTotalItems()` - Service
+
+**Vị trị:** `app/services/report_service.c`  
+**Mô tả:** Tính tổng số món đã bán
+
+**Pseudocode:**
+```c
 int calculateTotalItems() {
     FILE* file = fopen("app/database/history.txt", "r");
     if (file == NULL) {
         return 0;
     }
-
+    
     int itemCount = 0;
     char line[500];
-
+    
     while (fgets(line, sizeof(line), file)) {
+        // Loại bỏ ký tự xuống dòng
         int len = strlen(line);
         while (len > 0 && (line[len - 1] == '\n' || line[len - 1] == '\r')) {
             line[--len] = '\0';
         }
-
+        
         if (strncmp(line, "BILL|", 5) == 0) {
             int billId, customerId, itemsInBill;
             char nameKhach[50], phone[15], dateTime[50];
             double total, discount, finalPrice;
-
-            sscanf(line, "BILL|%d|%d|%[^|]|%[^|]|%[^|]|%lf|%lf|%lf|%d",
+            
+            sscanf(line, "BILL|%d|%d|%49[^|]|%14[^|]|%49[^|]|%lf|%lf|%lf|%d",
                    &billId, &customerId, nameKhach, phone, dateTime,
                    &total, &discount, &finalPrice, &itemsInBill);
-
-            itemCount += itemsInBill;
+            
+            itemCount += itemsInBill;  // Cộng dồn số item
         }
     }
-
+    
     fclose(file);
     return itemCount;
 }
+```
 
-// Phân tích doanh thu theo khách hàng
+**Độ phức tạp:** O(n)
+
+### 4. `analyzeByCustomer(CustomerRevenue* customerStats, int* customerCount)` - Service
+
+**Vị trị:** `app/services/report_service.c`  
+**Mô tả:** Phân tích doanh thu theo từng khách hàng
+
+**Pseudocode:**
+```c
 void analyzeByCustomer(CustomerRevenue* customerStats, int* customerCount) {
     FILE* file = fopen("app/database/history.txt", "r");
     if (file == NULL) {
+        *customerCount = 0;
         return;
     }
-
+    
     *customerCount = 0;
     char line[500];
-
+    
     while (fgets(line, sizeof(line), file)) {
+        // Loại bỏ ký tự xuống dòng
         int len = strlen(line);
         while (len > 0 && (line[len - 1] == '\n' || line[len - 1] == '\r')) {
             line[--len] = '\0';
         }
-
+        
         if (strncmp(line, "BILL|", 5) == 0) {
             int billId, customerId, itemCount;
             char nameKhach[50], phone[15], dateTime[50];
             double total, discount, finalPrice;
-
-            sscanf(line, "BILL|%d|%d|%[^|]|%[^|]|%[^|]|%lf|%lf|%lf|%d",
+            
+            sscanf(line, "BILL|%d|%d|%49[^|]|%14[^|]|%49[^|]|%lf|%lf|%lf|%d",
                    &billId, &customerId, nameKhach, phone, dateTime,
                    &total, &discount, &finalPrice, &itemCount);
-
-            // Tìm hoặc tạo entry cho khách hàng
-            CustomerRevenue* cust = findOrCreateCustomer(customerStats, customerCount, customerId);
+            
+            // Tìm hoặc tạo entry cho khách
+            CustomerRevenue* cust = 
+                findOrCreateCustomer(customerStats, customerCount, customerId);
+            
             if (cust != NULL) {
                 cust->billCount++;
                 cust->revenue += finalPrice;
             }
         }
     }
-
+    
     fclose(file);
 }
+```
 
-// ============ HÀM CHÍNH ============
+**Độ phức tạp:** O(n × m) - n dòng file, m khách
 
+### 5. `findOrCreateCustomer()` - Service
+
+**Vị trị:** `app/services/report_service.c`  
+**Mô tả:** Tìm khách trong mảng hoặc tạo entry mới
+
+**Pseudocode:**
+```c
+CustomerRevenue* findOrCreateCustomer(
+    CustomerRevenue* customerStats, 
+    int* customerCount, 
+    int customerId) {
+    
+    // Tìm khách đã tồn tại
+    for (int i = 0; i < *customerCount; i++) {
+        if (customerStats[i].customerId == customerId) {
+            return &customerStats[i];
+        }
+    }
+    
+    // Tạo entry mới (nếu không quá giới hạn)
+    #define MAX_CUSTOMERS 100
+    if (*customerCount < MAX_CUSTOMERS) {
+        customerStats[*customerCount].customerId = customerId;
+        customerStats[*customerCount].billCount = 0;
+        customerStats[*customerCount].revenue = 0.0;
+        return &customerStats[(*customerCount)++];
+    }
+    
+    return NULL;
+}
+```
+
+### 6. `printReportUI()` - UI
+
+**Vị trị:** `app/ui/report_ui.c`  
+**Mô tả:** In báo cáo lên màn hình
+
+**In ra:**
+```
+=================================================
+    BAO CAO DOANH THU QUAN COM TAM
+=================================================
+Thoi gian: 2024-01-15 15:30:45
+
+A. TONG HOP
+  - Tong doanh thu: 1.250.000 VND
+  - Tong so hoa don: 15
+  - Tong so mon da ban: 42
+
+B. PHAN TICH THEO KHACH HANG
+  CustomerID | So Hoa Don | Doanh Thu
+  1          | 5          | 650.000 VND
+  2          | 3          | 300.000 VND
+  3          | 7          | 300.000 VND
+
+=================================================
+```
+
+### 7. `exportReportToFile()` - Service
+
+**Vị trị:** `app/ui/report_ui.c`  
+**Mô tả:** Xuất báo cáo vào file
+
+**File:** `app/database/report_doanhthu.txt`
+
+**Format:**
+```
+=================================================
+    BAO CAO DOANH THU QUAN COM TAM
+=================================================
+Thoi gian: [Ngày giờ]
+
+A. TONG HOP
+  - Tong doanh thu: X.XXX VND
+  - Tong so hoa don: Y
+  - Tong so mon da ban: Z
+
+B. PHAN TICH THEO KHACH HANG
+  CustomerID | So Hoa Don | Doanh Thu
+  ...
+```
+
+---
+
+## VI. LUỒNG HOẠT ĐỘNG CHI TIẾT
+
+```
+handleGenerateReport()
+│
+├─→ 1. TÍNH TOÁN CÁC CHỈ SỐ:
+│   │
+│   ├─ Tổng Doanh Thu:
+│   │  ├─ calculateTotalRevenue()
+│   │  │  ├─ Mở file history.txt
+│   │  │  ├─ Duyệt từng dòng
+│   │  │  ├─ Nếu là BILL: Parse & lấy finalPrice
+│   │  │  ├─ Cộng dồn vào totalRevenue
+│   │  │  └─ Đóng file
+│   │  └─ Kết quả: totalRevenue
+│   │
+│   ├─ Tổng Số Hóa Đơn:
+│   │  ├─ calculateTotalBills()
+│   │  │  ├─ Mở file history.txt
+│   │  │  ├─ Duyệt từng dòng
+│   │  │  ├─ Đếm dòng bắt đầu "BILL|"
+│   │  │  └─ Đóng file
+│   │  └─ Kết quả: totalBills
+│   │
+│   ├─ Tổng Số Món:
+│   │  ├─ calculateTotalItems()
+│   │  │  ├─ Mở file history.txt
+│   │  │  ├─ Duyệt từng dòng
+│   │  │  ├─ Nếu là BILL: Lấy itemCount
+│   │  │  ├─ Cộng dồn vào totalItems
+│   │  │  └─ Đóng file
+│   │  └─ Kết quả: totalItems
+│   │
+│   └─ Phân Tích Theo Khách:
+│      ├─ analyzeByCustomer(customerStats, &customerCount)
+│      │  ├─ Mở file history.txt
+│      │  ├─ Duyệt từng dòng
+│      │  ├─ Nếu là BILL: Parse customerId
+│      │  ├─ findOrCreateCustomer()
+│      │  │  ├─ Tìm customerId trong mảng
+│      │  │  ├─ Nếu tồn tại: Trả về con trỏ
+│      │  │  ├─ Nếu chưa: Tạo entry mới
+│      │  │  └─ Trả về con trỏ
+│      │  ├─ Cộng dồn: billCount++, revenue += finalPrice
+│      │  └─ Đóng file
+│      └─ Kết quả: customerStats[] + customerCount
+│
+├─→ 2. HIỂN THỊ BÁO CÁO:
+│   │
+│   ├─ printReportUI(
+│   │      totalRevenue,
+│   │      totalBills,
+│   │      totalItems,
+│   │      customerStats,
+│   │      customerCount)
+│   │  │
+│   │  ├─ In:
+│   │  │  "BAO CAO DOANH THU QUAN COM TAM"
+│   │  │  "Thoi gian: [datetime]"
+│   │  │
+│   │  ├─ In TONG HOP:
+│   │  │  - Tong doanh thu: totalRevenue
+│   │  │  - Tong so hoa don: totalBills
+│   │  │  - Tong so mon da ban: totalItems
+│   │  │
+│   │  ├─ In PHAN TICH:
+│   │  │  - Bảng: CustomerID, Số Hóa Đơn, Doanh Thu
+│   │  │  - Duyệt customerStats[]
+│   │  │  - In từng khách
+│   │  │
+│   │  └─ Tạo file report_doanhthu.txt:
+│   │     └─ exportReportToFile()
+│   │
+│   └─ Báo cáo xuất xong
+│
+└─→ 3. QUAY LẠI MENU CHÍNH
+```
+
+---
+
+## VII. PSEUDOCODE ĐẦY ĐỦ
+
+```c
 void handleGenerateReport() {
-    printf("\nDang thuc hien thong ke doanh thu...\n\n");
-
-    // Bước 1: Tính toán các chỉ số tổng quan
+    printf("\n=== THONG KE DOANH THU ===\n");
+    
+    // 1. Tính toán
     double totalRevenue = calculateTotalRevenue();
     int totalBills = calculateTotalBills();
     int totalItems = calculateTotalItems();
-
-    // Bước 2: Phân tích theo khách hàng
+    
+    // 2. Phân tích theo khách
+    #define MAX_CUSTOMERS 100
     CustomerRevenue customerStats[MAX_CUSTOMERS];
     int customerCount = 0;
     analyzeByCustomer(customerStats, &customerCount);
-
-    // Bước 3: Gọi UI để hiển thị và xuất báo cáo
-    printReportToScreen(totalRevenue, totalBills, totalItems, customerStats, customerCount);
-    exportReportToFile(totalRevenue, totalBills, totalItems, customerStats, customerCount);
+    
+    // 3. Hiển thị báo cáo
+    printReportUI(totalRevenue, totalBills, totalItems, 
+                  customerStats, customerCount);
+    
+    // 4. Xuất file
+    exportReportToFile(totalRevenue, totalBills, totalItems,
+                       customerStats, customerCount);
+    
+    printf("\n[OK] Xuat file bao cao thanh cong!\n");
+    printf("File: app/database/report_doanhthu.txt\n");
 }
 ```
 
-**Giải thích code:**
-- **findOrCreateCustomer**: Quản lý mảng thống kê khách hàng
-- **calculateTotalRevenue**: Duyệt file và cộng dồn finalPrice
-- **analyzeByCustomer**: Tạo thống kê cho từng khách
-- **handleGenerateReport**: Điều phối toàn bộ quy trình
+---
 
-### 3.4 `app/ui/report_ui.h` - Header UI
+## VIII. VÍ DỤ PHÂN TÍCH
 
-Tạo file mới:
+### Input File: `history.txt`
+```
+BILL|123456|1|Nguyen Van A|0987654321|2024-01-15 10:30|150000|15000|135000|3
+ITEM|1|Sườn Nướng|40000|1|2||40000
+ITEM|5|Cơm|5000|2|0||10000
+ITEM|20|Nước Ngọt|12000|1|0||12000
 
-```c
-#ifndef REPORT_UI_H
-#define REPORT_UI_H
+BILL|123457|0|Guest||||60000|0|60000|1
+ITEM|3|Thịt Lợn|60000|1|0||60000
 
-#include "../models/models.h"
+BILL|123458|1|Nguyen Van A|0987654321|2024-01-15 14:20|200000|20000|180000|2
+ITEM|2|Sườn Kho|32000|1|0||32000
+ITEM|19|Cơm|5000|1|0||5000
 
-// ============ HÀM HIỂN THỊ ============
-
-// In báo cáo ra màn hình console
-void printReportToScreen(double totalRevenue, int totalBills, int totalItems,
-                        CustomerRevenue* customerStats, int customerCount);
-
-// Xuất báo cáo ra file văn bản
-void exportReportToFile(double totalRevenue, int totalBills, int totalItems,
-                       CustomerRevenue* customerStats, int customerCount);
-
-#endif
+BILL|123459|2|Tran Thi B|0912345678|2024-01-15 16:45|100000|10000|90000|2
+ITEM|4|Cút Kho|26000|1|0||26000
+ITEM|19|Cơm|5000|2|0||10000
 ```
 
-### 3.5 `app/ui/report_ui.c` - Logic UI
+### Quá Trình Tính Toán
 
-Tạo file mới:
+**1. Tổng Doanh Thu:**
+```
+Duyệt từng dòng BILL:
+  - Bill 123456: finalPrice = 135000 → total = 135000
+  - Bill 123457: finalPrice = 60000 → total = 195000
+  - Bill 123458: finalPrice = 180000 → total = 375000
+  - Bill 123459: finalPrice = 90000 → total = 465000
 
-```c
-#include "report_ui.h"
-#include <stdio.h>
-#include <time.h>
-
-// ============ HÀM HELPER ============
-
-// Lấy thời gian hiện tại định dạng dd/mm/yyyy hh:mm:ss
-void getCurrentDateTime(char* buffer, int size) {
-    time_t now = time(NULL);
-    struct tm* timeinfo = localtime(&now);
-    strftime(buffer, size, "%d/%m/%Y %H:%M:%S", timeinfo);
-}
-
-// ============ HÀM HIỂN THỊ ============
-
-// In báo cáo ra màn hình với định dạng đẹp
-void printReportToScreen(double totalRevenue, int totalBills, int totalItems,
-                        CustomerRevenue* customerStats, int customerCount) {
-    char dateTime[50];
-    getCurrentDateTime(dateTime, sizeof(dateTime));
-
-    printf("\n");
-    printf("====================================================\n");
-    printf("         BAO CAO DOANH THU QUAN COM TAM\n");
-    printf("====================================================\n");
-    printf("Ngay tao: %s\n", dateTime);
-    printf("====================================================\n\n");
-
-    printf("TONG QUAN:\n");
-    printf("  Tong so hoa don: %d\n", totalBills);
-    printf("  Tong doanh thu: %.3f VND\n", totalRevenue);
-    printf("  Tong so mon da ban: %d\n", totalItems);
-    printf("  Doanh thu trung binh/bill: %.3f VND\n",
-           totalBills > 0 ? totalRevenue / totalBills : 0.0);
-    printf("\n");
-
-    printf("PHAN TICH THEO KHACH HANG:\n");
-    printf("%-12s | %-12s | %-15s\n", "Khach ID", "So HD", "Doanh thu");
-    printf("--------------------------------------------\n");
-
-    for (int i = 0; i < customerCount; i++) {
-        printf("%-12d | %-12d | %15.3f\n",
-               customerStats[i].customerId,
-               customerStats[i].billCount,
-               customerStats[i].revenue);
-    }
-
-    printf("\n");
-    printf("====================================================\n");
-}
-
-// Xuất báo cáo ra file report_doanhthu.txt
-void exportReportToFile(double totalRevenue, int totalBills, int totalItems,
-                       CustomerRevenue* customerStats, int customerCount) {
-    FILE* file = fopen("app/database/report_doanhthu.txt", "w");
-    if (file == NULL) {
-        printf("[!] Khong the tao file report_doanhthu.txt\n");
-        return;
-    }
-
-    char dateTime[50];
-    getCurrentDateTime(dateTime, sizeof(dateTime));
-
-    // Header báo cáo
-    fprintf(file, "====================================================\n");
-    fprintf(file, "         BAO CAO DOANH THU QUAN COM TAM\n");
-    fprintf(file, "====================================================\n");
-    fprintf(file, "Ngay tao: %s\n", dateTime);
-    fprintf(file, "====================================================\n\n");
-
-    // Phần tổng quan
-    fprintf(file, "TONG QUAN:\n");
-    fprintf(file, "  Tong so hoa don: %d\n", totalBills);
-    fprintf(file, "  Tong doanh thu: %.3f VND\n", totalRevenue);
-    fprintf(file, "  Tong so mon da ban: %d\n", totalItems);
-    fprintf(file, "  Doanh thu trung binh/bill: %.3f VND\n",
-            totalBills > 0 ? totalRevenue / totalBills : 0.0);
-    fprintf(file, "\n");
-
-    // Phần phân tích khách hàng
-    fprintf(file, "PHAN TICH THEO KHACH HANG:\n");
-    fprintf(file, "%-12s | %-12s | %-15s\n", "Khach ID", "So HD", "Doanh thu");
-    fprintf(file, "--------------------------------------------\n");
-
-    for (int i = 0; i < customerCount; i++) {
-        fprintf(file, "%-12d | %-12d | %15.3f\n",
-                customerStats[i].customerId,
-                customerStats[i].billCount,
-                customerStats[i].revenue);
-    }
-
-    fprintf(file, "\n");
-    fprintf(file, "====================================================\n");
-
-    fclose(file);
-    printf("[OK] Bao cao da duoc luu vao app/database/report_doanhthu.txt\n");
-}
+totalRevenue = 465000 VND
 ```
 
-**Giải thích:**
-- **getCurrentDateTime**: Lấy thời gian hiện tại cho báo cáo
-- **printReportToScreen**: In ra console với format table đẹp
-- **exportReportToFile**: Ghi ra file với cùng format
+**2. Tổng Số Hóa Đơn:**
+```
+Đếm dòng BILL:
+  - BILL|123456
+  - BILL|123457
+  - BILL|123458
+  - BILL|123459
 
-### 3.6 `main.c` - Tích hợp Menu
-
-Sửa file `main.c`:
-
-**Bước 1: Thêm include**
-```c
-#include "app/services/report_service.h"
+totalBills = 4
 ```
 
-**Bước 2: Thêm case 6 trong switch**
-```c
-case 6:
-    system("cls");
-    handleGenerateReport();
-    system("pause");
-    break;
+**3. Tổng Số Món:**
+```
+Duyệt từng dòng BILL, lấy itemCount (tham số cuối):
+  - Bill 123456: itemCount = 3 → total = 3
+  - Bill 123457: itemCount = 1 → total = 4
+  - Bill 123458: itemCount = 2 → total = 6
+  - Bill 123459: itemCount = 2 → total = 8
+
+totalItems = 8
 ```
 
-## 4. Hướng dẫn Implement Từng Bước
+**4. Phân Tích Theo Khách:**
+```
+Duyệt từng dòng BILL, nhóm theo customerId:
 
-### Bước 1: Chuẩn bị Models
-1. Mở `app/models/models.h`
-2. Thêm struct `CustomerRevenue` vào cuối file
-3. Lưu file
+customerId = 0 (Guest):
+  - Bill 123457: revenue = 60000
+  → CustomerRevenue: {0, 1, 60000}
 
-### Bước 2: Tạo Service Files
-1. Tạo `app/services/report_service.h` với nội dung trên
-2. Tạo `app/services/report_service.c` với nội dung trên
-3. Kiểm tra compile: `gcc -c app/services/report_service.c -Iapp/models`
+customerId = 1 (Nguyen Van A):
+  - Bill 123456: revenue = 135000
+  - Bill 123458: revenue = 180000
+  → CustomerRevenue: {1, 2, 315000}
 
-### Bước 3: Tạo UI Files
-1. Tạo `app/ui/report_ui.h` với nội dung trên
-2. Tạo `app/ui/report_ui.c` với nội dung trên
-3. Kiểm tra compile: `gcc -c app/ui/report_ui.c -Iapp/models`
+customerId = 2 (Tran Thi B):
+  - Bill 123459: revenue = 90000
+  → CustomerRevenue: {2, 1, 90000}
 
-### Bước 4: Tích hợp Main
-1. Mở `main.c`
-2. Thêm include `report_service.h`
-3. Thêm case 6 trong switch menu
-4. Compile toàn bộ project
+Kết quả:
+  customerStats[] = [
+    {0, 1, 60000},
+    {1, 2, 315000},
+    {2, 1, 90000}
+  ]
+  customerCount = 3
+```
 
-### Bước 5: Test Chức năng
-1. Chạy chương trình
-2. Chọn chức năng 6
-3. Kiểm tra báo cáo hiển thị trên màn hình
-4. Kiểm tra file `app/database/report_doanhthu.txt` được tạo
+---
 
-## 5. Xử lý Lỗi Thường gặp
+## IX. FILE XUẤT RA
 
-### Lỗi 1: File history.txt không tồn tại
-- **Nguyên nhân**: Chưa có hóa đơn nào được lưu
-- **Giải pháp**: Tạo file trống hoặc thêm dữ liệu test
+### `app/database/report_doanhthu.txt`
+```
+=================================================
+    BAO CAO DOANH THU QUAN COM TAM
+=================================================
+Thoi gian: 2024-01-15 17:00:00
 
-### Lỗi 2: Không thể tạo file report_doanhthu.txt
-- **Nguyên nhân**: Thư mục database không tồn tại hoặc không có quyền ghi
-- **Giải pháp**: Tạo thư mục `app/database/` thủ công
+A. TONG HOP
+  - Tong doanh thu: 465.000 VND
+  - Tong so hoa don: 4
+  - Tong so mon da ban: 8
+  - Tong so khach hang (co dang ky): 2
 
-### Lỗi 3: Số liệu không chính xác
-- **Nguyên nhân**: Format file history.txt không đúng
-- **Giải pháp**: Kiểm tra format BILL|... khớp với sscanf
+B. PHAN TICH THEO KHACH HANG
+  CustomerID | Tên                | So Hoa Don | Doanh Thu
+  0          | Guest              | 1          | 60.000 VND
+  1          | Nguyen Van A       | 2          | 315.000 VND
+  2          | Tran Thi B         | 1          | 90.000 VND
 
-## 6. Mở rộng Tương lai
+C. TOP KHACH HANG (Theo Doanh Thu)
+  1. Nguyen Van A (ID: 1) - 315.000 VND
+  2. Tran Thi B (ID: 2) - 90.000 VND
+  3. Guest (ID: 0) - 60.000 VND
 
-### 6.1 Lọc theo Thời gian
-- Thêm tham số ngày bắt đầu/kết thúc
-- Parse dateTime từ BILL để lọc
+=================================================
+```
 
-### 6.2 Xuất CSV
-- Thêm hàm `exportReportToCSV()`
-- Format dữ liệu theo chuẩn CSV
+---
 
-### 6.3 Báo cáo Chi tiết Món ăn
-- Thống kê món bán chạy nhất
-- Phân tích theo danh mục món
+## X. FILE LIÊN QUAN
 
-### 6.4 Giao diện Đồ họa
-- Chuyển từ console sang GUI (nếu cần)
+| File | Vị trí | Chức năng |
+|------|--------|----------|
+| report_service.h/c | app/services/ | Toàn bộ hàm tính toán |
+| report_ui.h/c | app/ui/ | `printReportUI()`, `exportReportToFile()` |
+| file_service.c | app/services/ | I/O file |
+| models.h | app/models/ | Định nghĩa struct CustomerRevenue |
 
-## 7. Kết luận
+---
 
-Chức năng 6 được thiết kế với kiến trúc rõ ràng, dễ bảo trì và mở rộng. Code được tách biệt theo từng layer (models/services/ui) giúp dễ debug và phát triển thêm tính năng mới.
+## XI. PHÂN TÍCH ĐỘ PHỨC TẠP
+
+| Hàm | Độ phức tạp | Ghi chú |
+|-----|------------|---------|
+| `calculateTotalRevenue()` | O(n) | n = số dòng file |
+| `calculateTotalBills()` | O(n) | n = số dòng file |
+| `calculateTotalItems()` | O(n) | n = số dòng file |
+| `analyzeByCustomer()` | O(n × m) | n = dòng, m = khách |
+| `findOrCreateCustomer()` | O(m) | m = khách |
+| `handleGenerateReport()` | O(n × m) | n dòng, m khách |
+
+---
+
+## XII. TÓM TẮT
+
+| Khía cạnh | Chi tiết |
+|-----------|---------|
+| **Chỉ số chính** | Tổng doanh thu, Số bill, Số món |
+| **Phân tích** | Theo từng khách hàng |
+| **Lưu trữ** | File history.txt → Parse & Tính |
+| **Độ phức tạp** | O(n × m) - n dòng file, m khách |
+| **Xuất ra** | Report file (report_doanhthu.txt) |
+| **Format** | Text có cấu trúc, dễ đọc |
+| **Thời điểm** | Bất kỳ lúc nào (case 6) |

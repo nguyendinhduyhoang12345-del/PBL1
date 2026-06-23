@@ -3,12 +3,7 @@
 
 #include "../models/models.h"
 
-// Hàm chính xử lý báo cáo doanh thu
-void handleGenerateReport();
-
-
-// Các hàm phụ trợ để tính toán số liệu cho báo cáo
-// Tính tổng doanh thu từ tất cả hóa đơn
+// Tính tổng doanh thu
 double calculateTotalRevenue();
 
 // Tính tổng số hóa đơn

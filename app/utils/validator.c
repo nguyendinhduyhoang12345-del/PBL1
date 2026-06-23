@@ -2,11 +2,13 @@
 #include <string.h>
 #include "validator.h"
 
+// Hàm xóa bộ đệm đầu vào
 void clearBuffer() {
     int c;
     while ((c = getchar()) != '\n' && c != EOF);
 }
 
+// Hàm nhập số nguyên hợp lệ
 int getValidInt(const char* prompt) {
     int value;
     printf("%s", prompt);
@@ -18,6 +20,7 @@ int getValidInt(const char* prompt) {
     clearBuffer(); 
     return value;
 }
+
 
 double getValidDouble(const char* prompt) {
     double value;
