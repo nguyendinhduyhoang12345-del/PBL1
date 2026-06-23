@@ -30,7 +30,7 @@ void handleViewHistory() {
                 HistoryNode* currentHistory = getCustomerHistory(customerId);
                 printCustomerHistory(currentHistory);
             } else {
-                printf("[!] Khong tim thay khach hang voi so dien thoai nay.\n");
+                printf(RED "[!] Khong tim thay khach hang voi so dien thoai nay." RESET "\n");
             }
         } 
         else if (choice == 2) {
@@ -42,7 +42,7 @@ void handleViewHistory() {
             break;
         }
         else {
-            printf("[!] Lua chon khong hop le.\n");
+            printf(RED "[!] Lua chon khong hop le." RESET "\n");
         }
     }
 }

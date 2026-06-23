@@ -52,5 +52,5 @@ MenuItem *hashTableSearch(HashTable *ht, int key) {
         }
         node = node->next;
     }
-    return NULL; // Không tìm thấy
+    return NULL;
 }

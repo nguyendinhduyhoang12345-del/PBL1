@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "validator.h"
+#include "helper.h"
 
 // Hàm xóa bộ đệm đầu vào
 void clearBuffer() {
@@ -13,7 +14,7 @@ int getValidInt(const char* prompt) {
     int value;
     printf("%s", prompt);
     while (scanf("%d", &value) != 1) {
-        printf("  !! Loi: Vui long nhap so hop le! \n");
+        printf(RED "  !! Loi: Vui long nhap so hop le! " RESET "\n");
         clearBuffer();
         printf("%s", prompt);
     }
@@ -26,7 +27,7 @@ double getValidDouble(const char* prompt) {
     double value;
     printf("%s", prompt);
     while (scanf("%lf", &value) != 1) {
-        printf("  !! Loi: Vui long nhap so hop le! \n");
+        printf(RED "  !! Loi: Vui long nhap so hop le! " RESET "\n");
         clearBuffer();
         printf("%s", prompt);
     }
@@ -67,11 +68,11 @@ void getValidPhoneNumber(char* phone, int maxLen, const char* prompt) {
         clearBuffer();
         trimString(phone);
         if (strlen(phone) != 10) {
-            printf("  !! Loi: SDT phai co 10 chu so.\n");
+            printf(RED "  !! Loi: SDT phai co 10 chu so." RESET "\n");
             continue;
         }
         if (!isDigits(phone)) {
-            printf("  !! Loi: SDT chi duoc chua chu so.\n");
+            printf(RED "  !! Loi: SDT chi duoc chua chu so." RESET "\n");
             continue;
         }
         break;

@@ -27,7 +27,7 @@ void showCartUI(Bill *currentBill) {
     printf(CYAN "%*s" RESET WHITE "%s" RESET CYAN "%*s\n" RESET,
            leftPadding, "", title, rightPadding, "");
     if (currentBill->cart.itemCount == 0) {
-        printf(CYAN "          " RESET WHITE "( Gio hang hien dang trong )" RESET "\n");
+        printf(CYAN "                       " RESET RED "( Gio hang hien dang trong )" RESET "\n");
         printCyanLine();
         return;
     }

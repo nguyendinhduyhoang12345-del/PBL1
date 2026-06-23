@@ -33,7 +33,10 @@ void handleCustomer(Bill *currentBill) {
         
             getValidLine(newCust.name, sizeof(newCust.name), " >> Nhap Ten: ");
             
-            getValidLine(newCust.address, sizeof(newCust.address), " >> Nhap Dia chi: ");
+            getValidLine(newCust.address, sizeof(newCust.address), " >> Nhap Dia chi (Nhap 0 de bo qua): ");
+            if (strcmp(newCust.address, "0") == 0) {
+                strcpy(newCust.address, "Khong co dia chi");
+            }
             
             newCust.totalSpent = 0.000;
             strcpy(newCust.rank, "Bronze"); 

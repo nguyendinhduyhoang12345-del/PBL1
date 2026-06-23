@@ -17,7 +17,7 @@ void printWelcomeScreen() {
     printContentLine(YELLOW_BOLD, "              PBL1: ĐỒ ÁN LẬP TRÌNH TÍNH TOÁN                    ");
     printFrameLine("  ╠═════════════════════════════════════════════════════════════════╣");
     printContentLine(WHITE,       "                                                                 ");
-    printContentLine(YELLOW_BOLD, "        TÊN ĐỀ TÀI: ĐẶT HÀNG VÀ THANH TOÁN MÓN ĂN                ");
+    printContentLine(YELLOW_BOLD, "        TÊN ĐỀ TÀI: ỨNG DỤNG QUẢN LÝ NHÀ HÀNG CƠM TẤM            ");      
     printContentLine(WHITE,       "                                                                 ");
     printFrameLine("  ╠═════════════════════════════════════════════════════════════════╣");
     printContentLine(WHITE,       "                                                                 ");

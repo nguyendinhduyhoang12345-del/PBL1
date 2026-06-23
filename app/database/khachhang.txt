@@ -10,4 +10,5 @@
 10|0900123456|Pham Le Gia Huy|707 Bach Dang, Da Nang|221000.000|Bronze
 11|0904207257|Nguyen Duy Hoang|21 Ngu Hanh Son|453000.000|Bronze
 12|0900234567|Phan Ta Nhan|01 Au Co|455000.000|Bronze
-13|0904723515|Thai Nguyen Anh Kiet|07 Le Loi|624000.000|Silver
+13|0904723515|Thai Nguyen Anh Kiet|07 Le Loi|797700.000|Silver
+14|0355563713|Pham Nam Hai|Khong co dia chi|285000.000|Bronze

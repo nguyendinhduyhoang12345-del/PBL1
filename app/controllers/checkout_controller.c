@@ -18,7 +18,7 @@ void processCheckout(Bill* currentBill) {
     printf("\n" CYAN"==================== THANH TOAN ===================="RESET" \n");
     
     if (currentBill->cart.itemCount == 0) {
-        printf("\n[!] Gio hang cua ban dang trong! Vui long chon mon truoc khi thanh toan.\n");
+        printf(RED "\n[!] Gio hang cua ban dang trong! Vui long chon mon truoc khi thanh toan." RESET "\n");
         system("pause");
         return; 
     }
@@ -60,7 +60,7 @@ void processCheckout(Bill* currentBill) {
     customerMoney = getValidDouble("-> Nhap so tien khach dua : ");
 
     while (customerMoney < finalPrice) {
-        printf("[!] Khach dua thieu tien! Con thieu %.3f VND. Nhap lai: ", finalPrice - customerMoney);
+        printf(RED "[!] Khach dua thieu tien! Con thieu %.3f VND. Nhap lai: " RESET, finalPrice - customerMoney);
         customerMoney = getValidDouble("-> Nhap so tien khach dua : ");
     }
 

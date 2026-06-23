@@ -28,14 +28,14 @@ void removeFromCart(Bill *currentBill) {
     if (currentBill->cart.itemCount == 0) return;
     int stt = getValidInt(">> Nhap STT mon muon xoa: ");
     if (stt < 1 || stt > currentBill->cart.itemCount) {
-        printf("  !! STT khong hop le.\n");
+        printf(RED "  !! STT khong hop le." RESET "\n");
         return;
     }
 
     int idx = stt - 1;
     CartNode *node = cartGetNodeByIndex(&currentBill->cart, idx);
     if (!node) {
-        printf("  !! Loi: Khong tim thay mon de xoa.\n");
+        printf(RED "  !! Loi: Khong tim thay mon de xoa." RESET "\n");
         return;
     }
     MenuItem *menuItem = hashTableSearch(menuHashTable, node->item.id);
@@ -48,26 +48,26 @@ void updateQuantity(Bill *currentBill) {
 
     int stt = getValidInt(">> Nhap STT mon muon sua SL: ");
     if (stt < 1 || stt > currentBill->cart.itemCount) {
-        printf("  !! STT khong hop le.\n");
+        printf(RED "  !! STT khong hop le." RESET "\n");
         return;
     }
 
     int idx = stt - 1;
     CartNode *node = cartGetNodeByIndex(&currentBill->cart, idx);
     if (!node) {
-        printf("  !! Loi: Khong tim thay mon de sua.\n");
+        printf(RED "  !! Loi: Khong tim thay mon de sua." RESET "\n");
         return;
     }
     
     int newQty = getValidInt(">> Nhap so luong moi: ");
     if (newQty <= 0) {
-        printf("  !! So luong phai > 0. Muon xoa hay chon chuc nang Xoa.\n");
+        printf(RED "  !! So luong phai > 0. Muon xoa hay chon chuc nang Xoa." RESET "\n");
         return;
     }
 
     MenuItem *menuItem = hashTableSearch(menuHashTable, node->item.id);
     if (!menuItem) {
-        printf("  !! Loi: Khong tim thay mon trong menu.\n");
+        printf(RED "  !! Loi: Khong tim thay mon trong menu." RESET "\n");
         return;
     }
     // Kiểm tra nếu là món chính thì tổng sau khi sửa không được > 5
@@ -82,7 +82,7 @@ void updateQuantity(Bill *currentBill) {
         }
         countMain = countMain - oldQty + newQty; // trừ đi số lượng cũ và cộng số lượng mới
         if (countMain > 5) {
-            printf("  !! Loi: Tong so mon chinh khong duoc vuot qua 5.\n");
+            printf(RED "  !! Loi: Tong so mon chinh khong duoc vuot qua 5." RESET "\n");
             return;
         }
     }
@@ -111,26 +111,26 @@ void handleOrderMenu(Bill* currentBill) {
 
         MenuItem *menuItem = hashTableSearch(menuHashTable, idNhap);
         if (!menuItem) {
-            printf("  !! Loi: Ma mon ko hop le!\n");
+        printf(RED "  !! Loi: Ma mon ko hop le!" RESET "\n");
             continue;
         }
 
         if (idNhap < 1 || idNhap > TONG_SO_MON) {
-            printf("  !! Loi: Ma mon ko hop le!\n");
+            printf(RED "  !! Loi: Ma mon ko hop le!" RESET "\n");
             continue;
         }
         if (idNhap <= 12 && countMain >= 5) {
-            printf("  !! Thong bao: Ban da dat du 5 mon chinh.\n");
+            printf(RED "  !! Thong bao: Ban da dat du 5 mon chinh." RESET "\n");
             continue;
         }
          
         int slNhap = getValidInt(">> Nhap so luong: ");
         if (slNhap <= 0 || slNhap > 5) {
-            printf("  !! Loi: So luong khong hop le (Toi da 5).\n");
+            printf(RED "  !! Loi: So luong khong hop le (Toi da 5)." RESET "\n");
             continue;
         }
         if (idNhap <= 12 && countMain + slNhap > 5) {
-            printf("  !! Loi: Tong so mon chinh khong duoc vuot qua 5 (Dang co: %d).\n", countMain);
+            printf(RED "  !! Loi: Tong so mon chinh khong duoc vuot qua 5 (Dang co: %d)." RESET "\n", countMain);
             continue;
         }
 
@@ -145,7 +145,7 @@ void handleOrderMenu(Bill* currentBill) {
                     if (opt == 2) giaThucTe += 10000;
                     break;
                 } else {
-                    printf("  !! Loi: Chi chon 1 hoac 2.\n");
+                    printf(RED "  !! Loi: Chi chon 1 hoac 2." RESET "\n");
                 }
             }
         }

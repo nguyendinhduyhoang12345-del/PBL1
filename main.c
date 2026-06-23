@@ -61,7 +61,7 @@ int main() {
         
         choice = getValidInt("-> Chon chuc nang: ");
         if (choice < 0 || choice > 6) {
-            printf("[!] Lua chon khong hop le.\n");
+            printf(RED "[!] Lua chon khong hop le." RESET "\n");
             system("pause");
             continue;
         }

@@ -30,8 +30,8 @@ HistoryNode* getCustomerHistory(int customerId) {
         if (current->customerId == customerId) {
             HistoryNode* newNode = (HistoryNode*)malloc(sizeof(HistoryNode));
             *newNode = *current;
-            newNode->next = result; // Thêm vào đầu danh sách kết quả
-            result = newNode; // Cập nhật lại head của danh sách kết quả
+            newNode->next = result;
+            result = newNode;
         }
         current = current->next;
     }
@@ -54,7 +54,7 @@ int getCustomerIdByPhone(char* phone) {
     if (cust != NULL) {
         return cust->id;
     }
-    return -1;  // Không tìm thấy
+    return -1;
 }
 
 // Tìm hóa đơn theo ID bill
