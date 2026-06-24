@@ -24,8 +24,8 @@ void printWelcomeScreen() {
     printContentLine(WHITE,       "  Giáo viên hướng dẫn:                                           ");
     printContentLine(WHITE,       "       TRƯƠNG NGỌC CHÂU                                          ");
     printContentLine(WHITE,       "  Sinh viên thực hiện:                                           ");
-    printContentLine(WHITE,       "       NGUYỄN ĐÌNH DUY HOÀNG    2HT_Nhật 1    MSSV: 102250222    ");
-    printContentLine(WHITE,       "       THÁI NGUYỄN ANH KIỆT     2HT_Nhật 1    MSSV: 102250233    ");
+    printContentLine(WHITE,       "       NGUYỄN ĐÌNH DUY HOÀNG    25T_Nhật 1    MSSV: 102250222    ");
+    printContentLine(WHITE,       "       THÁI NGUYỄN ANH KIỆT     25T_Nhật 1    MSSV: 102250233    ");
     printContentLine(WHITE,       "                                                                 ");
     printFrameLine("  ╚═════════════════════════════════════════════════════════════════╝");
 }

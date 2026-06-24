@@ -272,7 +272,7 @@ void loadHistoryFromFile() {
                 item.option = option;
                 item.totalPrice = totalPrice;
                 strcpy(item.note, note);
-                cartAddItem(&tempBill.cart, item); // nếu không có dòng này thì sẽ không cập nhật được itemCount trong cart, dẫn đến khi lưu vào file sẽ bị sai số lượng item
+                cartAddItem(&tempBill.cart, item);
                 itemCount++;
             }
         }

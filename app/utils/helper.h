@@ -12,7 +12,6 @@
 
 const char* getRankColor(const char *rank);
 
-// Hàm kẻ đường ngang trang trí (độ dài 136 ký tự để khớp với Menu của bạn)
 void printLine();
 
 // Hàm lấy ngày giờ hiện tại và lưu vào chuỗi buffer
